@@ -85,7 +85,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - `uv run pytest` is fully green across unit + integration + scheduler tests.
   - `uv run ruff check` passes repo-wide.
 - **Goal signals**: S1, S2, S3, S4, S5
-- **Status**: [ ]
+- **Issue**: #8
+- **Status**: [x]
 
 ## T007 — MCP server
 - **Phase**: 2

@@ -109,25 +109,12 @@ async def test_promote_pending_orders_session_opened_via_factory():
     reason="requires live DB — set TEST_DATABASE_URL in .env or environment",
 )
 @pytest.mark.asyncio
-async def test_promote_pending_orders_integration():
+async def test_promote_pending_orders_integration(session_factory):
     """Integration: PENDING orders become PROCESSING; other statuses are unchanged."""
     from sqlalchemy import select
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-    from sqlalchemy.pool import NullPool
 
-    from src.core.database import Base
     from src.orders.models import Order
 
-    engine = create_async_engine(_TEST_DB_URL, echo=False, poolclass=NullPool)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-
-    # Ensure tables exist (idempotent)
-    non_vector = [t for t in Base.metadata.tables.values() if "embedding" not in t.name]
-    for table in non_vector:
-        async with engine.begin() as conn:
-            await conn.run_sync(table.create, checkfirst=True)
-
-    # Seed one order per status
     pending_id = uuid.uuid4()
     processing_id = uuid.uuid4()
     shipped_id = uuid.uuid4()
@@ -146,40 +133,28 @@ async def test_promote_pending_orders_integration():
             session.add(order)
         await session.commit()
 
-    try:
-        # Run the job
-        await promote_pending_orders(session_factory)
+    await promote_pending_orders(session_factory)
 
-        # Assert outcomes
-        async with session_factory() as session:
-            result = await session.execute(select(Order))
-            orders = {o.id: o for o in result.scalars().all()}
+    async with session_factory() as session:
+        result = await session.execute(
+            select(Order).where(
+                Order.id.in_([pending_id, processing_id, shipped_id, delivered_id])
+            )
+        )
+        orders = {o.id: o for o in result.scalars().all()}
 
-        assert orders[pending_id].status == OrderStatus.PROCESSING, (
-            "PENDING order must be promoted to PROCESSING"
-        )
-        assert orders[processing_id].status == OrderStatus.PROCESSING, (
-            "PROCESSING order must remain PROCESSING"
-        )
-        assert orders[shipped_id].status == OrderStatus.SHIPPED, (
-            "SHIPPED order must remain SHIPPED"
-        )
-        assert orders[delivered_id].status == OrderStatus.DELIVERED, (
-            "DELIVERED order must remain DELIVERED"
-        )
-
-        # The promoted order must have updated_at set
-        assert orders[pending_id].updated_at is not None, (
-            "updated_at must be set after promotion"
-        )
-
-    finally:
-        # Clean up seeded rows using SQLAlchemy core (asyncpg does not support
-        # the `::cast` syntax inside parameterised text queries).
-        from sqlalchemy import delete as sa_delete
-
-        seeded_ids = [pending_id, processing_id, shipped_id, delivered_id]
-        async with session_factory() as session:
-            await session.execute(sa_delete(Order).where(Order.id.in_(seeded_ids)))
-            await session.commit()
-        await engine.dispose()
+    assert orders[pending_id].status == OrderStatus.PROCESSING, (
+        "PENDING order must be promoted to PROCESSING"
+    )
+    assert orders[processing_id].status == OrderStatus.PROCESSING, (
+        "PROCESSING order must remain PROCESSING"
+    )
+    assert orders[shipped_id].status == OrderStatus.SHIPPED, (
+        "SHIPPED order must remain SHIPPED"
+    )
+    assert orders[delivered_id].status == OrderStatus.DELIVERED, (
+        "DELIVERED order must remain DELIVERED"
+    )
+    assert orders[pending_id].updated_at is not None, (
+        "updated_at must be set after promotion"
+    )
