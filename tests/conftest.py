@@ -43,7 +43,7 @@ async def db_setup():
         _TABLES_CREATED = True
     yield
     async with test_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE order_items, orders CASCADE"))
+        await conn.execute(text("TRUNCATE orders CASCADE"))
 
 
 @pytest_asyncio.fixture

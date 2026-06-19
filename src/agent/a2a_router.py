@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.agent.executor import ExecutionResult, run_executor
+from src.core.config import settings as _settings
 from src.core.database import async_session as _prod_session_factory
 
 router = APIRouter(tags=["a2a"])
@@ -34,7 +35,7 @@ AGENT_CARD = {
     "name": "EC-OPS Order Agent",
     "description": "Processes natural-language order requests: create, retrieve, list, cancel.",
     "version": "0.1.0",
-    "url": "http://localhost:8000",
+    "url": f"http://localhost:{_settings.port}",
     "capabilities": {
         "streaming": False,
         "pushNotifications": False,

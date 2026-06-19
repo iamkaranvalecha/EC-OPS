@@ -1,0 +1,232 @@
+### EC-OPS — Complex End-to-End Scenarios
+### Run these in sequence (top to bottom) — copy IDs between steps
+### Requires VS Code REST Client extension (humao.rest-client)
+
+@baseUrl = http://localhost:8002
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 1: Full order lifecycle
+# Create → verify PENDING → cancel → verify gone
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 1.1 — Create order
+# @name lifecycle_create
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Lifecycle Test",
+  "items": [
+    { "product_name": "Test Item", "quantity": 1, "price": "10.00" }
+  ]
+}
+
+###
+
+### Step 1.2 — Verify it is PENDING
+# Copy the id from Step 1.1 response
+@lifecycle_id = REPLACE_WITH_ID_FROM_1_1
+
+GET {{baseUrl}}/orders/{{lifecycle_id}}
+
+###
+
+### Step 1.3 — Confirm it appears in PENDING list
+GET {{baseUrl}}/orders?status=PENDING
+
+###
+
+### Step 1.4 — Cancel it
+DELETE {{baseUrl}}/orders/{{lifecycle_id}}
+
+###
+
+### Step 1.5 — Verify it is gone (expect 404)
+GET {{baseUrl}}/orders/{{lifecycle_id}}
+
+###
+
+### Step 1.6 — Confirm it no longer appears in PENDING list
+GET {{baseUrl}}/orders?status=PENDING
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 2: Bulk creation + status filtering
+# Create several orders, filter by status, verify counts
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 2.1 — Create order A
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Bulk Customer A",
+  "items": [{ "product_name": "Item A1", "quantity": 2, "price": "15.00" }]
+}
+
+###
+
+### Step 2.2 — Create order B
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Bulk Customer B",
+  "items": [
+    { "product_name": "Item B1", "quantity": 1, "price": "25.00" },
+    { "product_name": "Item B2", "quantity": 3, "price": "8.50" }
+  ]
+}
+
+###
+
+### Step 2.3 — Create order C
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Bulk Customer C",
+  "items": [{ "product_name": "Item C1", "quantity": 5, "price": "3.99" }]
+}
+
+###
+
+### Step 2.4 — List all orders (should include A, B, C as PENDING)
+GET {{baseUrl}}/orders
+
+###
+
+### Step 2.5 — List only PENDING
+GET {{baseUrl}}/orders?status=PENDING
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 3: Cancel race — try to cancel a PROCESSING order
+# Create an order, wait for scheduler to promote it (5 min),
+# then attempt cancel → expect 409
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 3.1 — Create order to be promoted
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Processing Race",
+  "items": [{ "product_name": "Race Item", "quantity": 1, "price": "99.00" }]
+}
+
+###
+
+### Step 3.2 — After 5 min, verify it is now PROCESSING
+# Copy id from Step 3.1
+@race_id = REPLACE_WITH_ID_FROM_3_1
+
+GET {{baseUrl}}/orders/{{race_id}}
+
+###
+
+### Step 3.3 — Attempt to cancel a PROCESSING order → expect 409
+DELETE {{baseUrl}}/orders/{{race_id}}
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 4: Agent creates order, REST API reads it
+# Natural language → agent → SSE → verify via REST
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 4.1 — Ask agent to create order
+GET {{baseUrl}}/agent/stream?message=Create%20an%20order%20for%20Grace%20with%202%20yoga%20mats%20at%20%2422.00%20each%20and%201%20water%20bottle%20at%20%2412.50
+
+###
+
+### Step 4.2 — Confirm via REST — should appear in PENDING list
+GET {{baseUrl}}/orders?status=PENDING
+
+###
+
+### Step 4.3 — Get the order Grace placed (copy id from PENDING list)
+@grace_order_id = REPLACE_WITH_ID_FROM_4_2
+
+GET {{baseUrl}}/orders/{{grace_order_id}}
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 5: A2A fire-and-forget with polling
+# Submit → poll until completed → read result
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 5.1 — Submit task (returns 202 immediately)
+# @name a2a_scenario
+POST {{baseUrl}}/a2a/tasks/send
+Content-Type: application/json
+
+{
+  "message": "Create an order for Henry with 1 ergonomic chair at $350.00 and list all pending orders"
+}
+
+###
+
+### Step 5.2 — Poll immediately (likely still pending)
+@a2a_task_id = REPLACE_WITH_TASK_ID_FROM_5_1
+
+GET {{baseUrl}}/a2a/tasks/{{a2a_task_id}}
+
+###
+
+### Step 5.3 — Poll again after a few seconds (should be completed)
+GET {{baseUrl}}/a2a/tasks/{{a2a_task_id}}
+
+###
+
+### Step 5.4 — Verify the order was created via REST
+GET {{baseUrl}}/orders?status=PENDING
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 6: Multi-item order price edge cases
+# Zero-price item (free gift), max quantity, high-value order
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 6.1 — Order with a free item (price = 0.00, allowed by ge=0)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Promo Customer",
+  "items": [
+    { "product_name": "Premium Headphones", "quantity": 1, "price": "199.99" },
+    { "product_name": "Free Carry Case",    "quantity": 1, "price": "0.00" }
+  ]
+}
+
+###
+
+### Step 6.2 — High-value order
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Enterprise Buyer",
+  "items": [
+    { "product_name": "Server Rack",       "quantity": 2,  "price": "1299.99" },
+    { "product_name": "Network Switch",    "quantity": 4,  "price": "459.00" },
+    { "product_name": "UPS Battery",       "quantity": 2,  "price": "349.50" },
+    { "product_name": "Patch Panel",       "quantity": 10, "price": "89.99" }
+  ]
+}
+
+###
+
+### Step 6.3 — Large quantity, low unit price
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Stationery Bulk",
+  "items": [
+    { "product_name": "Ballpoint Pen",  "quantity": 100, "price": "0.49" },
+    { "product_name": "Sticky Notes",  "quantity": 50,  "price": "1.99" },
+    { "product_name": "Paper Clip Box", "quantity": 20,  "price": "2.49" }
+  ]
+}
