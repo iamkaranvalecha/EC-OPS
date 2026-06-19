@@ -99,7 +99,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - Server is runnable as a standalone process (e.g. `uv run python -m src.agent.mcp_server`).
   - `uv run pytest tests/agent/test_mcp_server.py` passes: lists tools (asserts all five present) and invokes one CRUD tool end-to-end against the test DB.
 - **Goal signals**: S6
-- **Status**: [ ]
+- **Issue**: #10
+- **Status**: [x]
 
 ## T008 — A2A agent endpoint
 - **Phase**: 2
