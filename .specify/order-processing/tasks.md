@@ -151,4 +151,5 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - Renders streaming text deltas, tool-call status, and `ui_action` cards (order details + status badges) live.
   - Manual run shows a chat that creates and displays an order via the agent.
 - **Goal signals**: S9
-- **Status**: [ ]
+- **Issue**: #18
+- **Status**: [x]

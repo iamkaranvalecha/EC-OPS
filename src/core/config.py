@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ecops"
     anthropic_api_key: str = ""
+    port: int = 8002
 
 
 settings = Settings()

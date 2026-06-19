@@ -68,6 +68,6 @@ tasks:
     src/agent/agui_stream.py: blob:63749eb4fe3c5b5d2d29dd12b7db12b838672f26
     tests/agent/test_a2ui_events.py: blob:65c806a65b88e955807a1ce86e4b2f3a004f3566
   T011:
-    frontend/index.html: not_yet_created
-    frontend/app.js: not_yet_created
-    frontend/styles.css: not_yet_created
+    frontend/index.html: blob:1618ad6e9dd034a968d408b9d8403677c343b2e5
+    frontend/app.js: blob:edee0f5e581d7e8189d6aede4362e859da52cb0e
+    frontend/styles.css: blob:f62f77989fd11a8af6a81456920530e0b9db3737
