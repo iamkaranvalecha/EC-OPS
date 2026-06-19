@@ -122,6 +122,7 @@ If no task description, re-read `$FEATURE_DIR/tasks.md` fresh and find the first
 - SPEC_REQ from `- **Spec requirement**:`
 - SCOPE from `- **Scope**:`
 - DONE_WHEN from `- **Done when**:`
+- ISSUE_NUM from `- **Issue**: #<N>` (if present in the task block; else set to "")
 
 If no `[ ]` task exists: check for `[~]` (blocked) tasks. If any exist, list them
 and ask the human if they want to retry one. If none at all: stop — "All tasks
@@ -143,12 +144,18 @@ Done when: <DONE_WHEN>
 
 ## Phase 2 — Create GitHub issue
 
-Dispatch tracker:
+If ISSUE_NUM is already set (read from `- **Issue**: #<N>` in Phase 0): skip CREATE_ISSUE.
+Print: `GitHub issue: #<ISSUE_NUM> (already tracked — skipping duplicate creation)`
+
+Otherwise dispatch tracker:
 ```
 CREATE_ISSUE title="<TASK_ID>: <TASK_TITLE>" milestone="<MILESTONE>" body="<task brief>"
 ```
-
 Set ISSUE_NUM from output or "N/A" if GITHUB_UNAVAILABLE.
+
+If ISSUE_NUM ≠ "N/A" and was freshly created: append `- **Issue**: #<ISSUE_NUM>` to the task
+block in `$TASKS_PATH` (after the `- **Done when**:` line). This lets `/resume` skip
+re-creating the issue on the next session.
 
 ## Phase 3 — Build → Check → Review loop
 
@@ -278,17 +285,7 @@ Then:
 
 Mark `[x]` in `$TASKS_PATH` (if TASK_ID set); verify by re-reading that line.
 
-Update fingerprint for this task's SCOPE files (read-only git, internal bookkeeping):
-```bash
-for file in <SCOPE files>; do
-  blob=$(git ls-files -s "$file" 2>/dev/null | awk '{print $2}')
-  [ -n "$blob" ] && sed -i "s|$(printf '%s\n' "$file" | sed 's/[[\.*^$()+?{|]/\\&/g'): not_yet_created|$(printf '%s\n' "$file" | sed 's/[[\.*^$()+?{|]/\\&/g'): blob:$blob|" "$FEATURE_DIR/.fingerprint" 2>/dev/null
-done
-```
-
 Dispatch docs-writer with task brief + SCOPE files changed.
-
-Tracker: `CLOSE_DONE issue=<N> body="<summary>"` (if available)
 
 Print:
 ```
@@ -304,44 +301,102 @@ Files:
   <list of SCOPE files created or modified>
 ```
 
-Then run the commit flow:
+Then run the § Commit flow (defined in plan.md — duplicated here for standalone use):
 
-Read `commit_strategy` from `.specify/preferences.md`.
-If the field is absent (project predates this preference): default to `ask`.
-Never default to `off` — that silently regresses existing projects.
+Read `commit_strategy` from `.specify/preferences.md` (default `ask` if absent).
+Read `branch_strategy` from `.specify/preferences.md` (default `auto` if absent).
 
-Generate commit message:
+**If `commit_strategy: off`**: print the following and stop.
+```
+Files ready to commit manually:
+  <SCOPE files>
+  .specify/<FEATURE_SLUG>/tasks.md
+  .specify/<FEATURE_SLUG>/.fingerprint
+Push to remote on your schedule.
+```
+
+**Otherwise (ask or auto):**
+
+**Step 1 — Pull**
+```bash
+git diff --cached --quiet || git restore --staged .
+BRANCH=$(git branch --show-current)
+git pull --rebase origin "$BRANCH" 2>&1
+```
+If non-zero exit: **STOP** — "Pull failed — resolve conflicts first, then re-run /speckit-loop."
+
+**Step 2 — Branch** (if `branch_strategy: auto` and BRANCH is main/master/develop/trunk)
+```bash
+NEW_BRANCH="feat/<TASK_ID>-<task-title-lowercased-kebab>"
+if git branch --list "$NEW_BRANCH" | grep -q .; then
+  git checkout "$NEW_BRANCH"
+  # Print: Switched to existing branch: $NEW_BRANCH
+else
+  git checkout -b "$NEW_BRANCH"
+  # Print: Created branch: $NEW_BRANCH
+fi
+```
+Update `BRANCH = NEW_BRANCH`.
+
+**Step 3 — Stage SCOPE files**
+```bash
+git add <SCOPE files>
+```
+
+**Step 4 — Update fingerprint** (must run after step 3 so staged SHAs are available)
+```bash
+for file in <SCOPE files>; do
+  blob=$(git ls-files -s "$file" 2>/dev/null | awk '{print $2}')
+  [ -n "$blob" ] && sed -i "s|$(printf '%s\n' "$file" | sed 's/[[\.*^$()+?{|]/\\&/g'): not_yet_created|$(printf '%s\n' "$file" | sed 's/[[\.*^$()+?{|]/\\&/g'): blob:$blob|" "$FEATURE_DIR/.fingerprint" 2>/dev/null
+done
+```
+
+**Step 5 — Stage .specify/ files**
+```bash
+git add ".specify/$FEATURE_SLUG/tasks.md" ".specify/$FEATURE_SLUG/.fingerprint"
+```
+
+**Step 6 — Build commit message**
 ```
 <TASK_TITLE lowercased as imperative verb phrase>
 
 Task:    <TASK_ID>
 Spec:    <SPEC_REQ>
 Signals: <goal signals advanced>
+<if ISSUE_NUM ≠ N/A: "Closes: #<ISSUE_NUM>">
 ```
 First line: lowercase TASK_TITLE; if it reads as a noun, prepend "implement".
 
-**If `commit_strategy: off`**: print "Commit, branch, and push on your schedule." Stop.
+**Step 7 — Commit**
 
-**If `commit_strategy: ask`**:
+If `commit_strategy: ask`:
 ```
 Stage and commit? (yes / no / edit message)
-  Files:   <SCOPE files, one per line>
+  Branch:  <BRANCH>
+  Files:   <SCOPE files + tasks.md + .fingerprint, one per line>
   Message: "<generated message>"
 ```
 STOP and wait.
-- `yes` → `git add <SCOPE files> && git commit -m "<message>"`; print the commit SHA; print "Push to remote on your schedule."
-- `no` → print "Files left unstaged. Push to remote on your schedule." Stop.
-- `edit message` → STOP again; ask for message; on reply → `git add <SCOPE files> && git commit -m "<user message>"`; print SHA; print "Push to remote on your schedule."
+- `yes` → `git commit -m "<message>"`; capture SHA; print "Push to remote on your schedule."
+- `no` → `git restore --staged .`; print "Unstaged. Commit manually when ready." Stop.
+- `edit message` → STOP; on reply → `git commit -m "<user message>"`; capture SHA; print "Push to remote on your schedule."
 
-**If `commit_strategy: auto`**:
+If `commit_strategy: auto`:
 ```bash
-git add <SCOPE files>
 git commit -m "<generated message>"
 ```
-Print: `Committed: <SHA> — <TASK_ID>: <TASK_TITLE>`
-Print: `Push to remote on your schedule.`
+Capture SHA. Print: `Committed: <SHA> — <TASK_ID>: <TASK_TITLE>` · `Push to remote on your schedule.`
 
-Always stage only the explicit SCOPE file list. Never use `git add .` or `git add -A`.
+**Step 8 — Post review comment** (only if commit happened and ISSUE_NUM ≠ N/A)
+```
+COMMENT issue=<ISSUE_NUM> body="Committed <SHA> to `<BRANCH>`. Ready for your review.
+
+Files: <SCOPE files, one per line>"
+```
+
+Also close the issue: `CLOSE_DONE issue=<ISSUE_NUM> body="<summary>"` (if available)
+
+Always stage only the explicit SCOPE file list + tasks.md + .fingerprint. Never use `git add .` or `git add -A`.
 
 Stop.
 

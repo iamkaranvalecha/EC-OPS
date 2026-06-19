@@ -103,8 +103,13 @@ commit_strategy: ask | auto | off
   → auto: commit automatically — good for fully automated / unattended runs
   → off:  never touch git — you commit manually
 
+branch_strategy: auto | manual
+  → auto:   creates feat/<TASK_ID>-<title> branch automatically when on main/master/develop/trunk
+  → manual: you create and switch branches yourself
+  → <recommendation: auto for most users>
+
 Reply "confirmed" to use these, or say what to change
-(e.g. "use FastAPI instead", "feature-based structure", "commit_strategy: auto").
+(e.g. "use FastAPI instead", "feature-based structure", "branch_strategy: manual").
 ```
 
 Do NOT write goal.md, plan.md, tasks.md, or preferences.md in suggestion mode.

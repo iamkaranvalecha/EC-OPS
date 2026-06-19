@@ -30,9 +30,9 @@ tasks:
     migrations/versions/0001_create_orders.py: not_yet_created
     tests/orders/test_models.py: not_yet_created
   T003:
-    src/orders/service.py: not_yet_created
-    src/orders/exceptions.py: not_yet_created
-    tests/orders/test_service.py: not_yet_created
+    src/orders/service.py: blob:a56b6c2f836c08e9edfe823b82c543b66a4a0274
+    src/orders/exceptions.py: blob:fc25b7941cfb5a79b635b090ee540161b9a4184d
+    tests/orders/test_service.py: blob:d53b037758bef94d274e1f11bece9ec18d993abd
   T004:
     src/orders/router.py: not_yet_created
     src/core/dependencies.py: not_yet_created
