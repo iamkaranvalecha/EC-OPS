@@ -113,7 +113,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - Claude-backed executor (claude-sonnet-4-6) maps NL intent → order tool calls.
   - `uv run pytest tests/agent/test_a2a.py tests/integration/test_a2a_flow.py` passes: a "create an order" task results in a created order (executor mocked for determinism).
 - **Goal signals**: S7
-- **Status**: [ ]
+- **Issue**: #12
+- **Status**: [x]
 
 ## T009 — AG-UI SSE stream
 - **Phase**: 3
