@@ -49,9 +49,9 @@ tasks:
     tests/integration/test_orders_api.py: blob:600647cfa2205f086afab2bea1e1545c84fd0398
     tests/scheduler/test_jobs.py: blob:664893c9a32570179508ee96fc1f5a6841589a57
   T007:
-    src/agent/mcp_server.py: not_yet_created
-    src/agent/tools.py: not_yet_created
-    tests/agent/test_mcp_server.py: not_yet_created
+    src/agent/mcp_server.py: blob:4c7611877ffe1478b2838b248b6135f9f76c326d
+    src/agent/tools.py: blob:4e98bc78cc34c34f6453d404f1bbc1b5144cdd4c
+    tests/agent/test_mcp_server.py: blob:4958c62afaf8a5570bc3b8b25c60d6def65df3ba
   T008:
     src/agent/a2a_router.py: not_yet_created
     src/agent/executor.py: not_yet_created
