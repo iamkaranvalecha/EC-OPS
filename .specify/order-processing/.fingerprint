@@ -34,11 +34,11 @@ tasks:
     src/orders/exceptions.py: blob:fc25b7941cfb5a79b635b090ee540161b9a4184d
     tests/orders/test_service.py: blob:d53b037758bef94d274e1f11bece9ec18d993abd
   T004:
-    src/orders/router.py: not_yet_created
-    src/core/dependencies.py: not_yet_created
-    src/main.py: not_yet_created
-    tests/orders/test_router.py: not_yet_created
-    tests/integration/test_orders_api.py: not_yet_created
+    src/orders/router.py: blob:012f53aa201e95263d7e4ae84200386a0b4e98c8
+    src/core/dependencies.py: blob:dfe6fd2f48254429fd43c8329a5c7174bc659794
+    src/main.py: blob:9fb8c4e6d9211a0f25645650ce7f63e8624aa167
+    tests/orders/test_router.py: blob:b939f694b62bd0f98b3daaeaedef6f0d4b9cc726
+    tests/integration/test_orders_api.py: blob:67b76198d4a6424e295d11de02efff060672470d
   T005:
     src/scheduler/jobs.py: not_yet_created
     src/scheduler/setup.py: not_yet_created
