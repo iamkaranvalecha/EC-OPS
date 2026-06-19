@@ -1,0 +1,140 @@
+### EC-OPS — Validation & Error Scenarios
+### Every request below should return 4xx — confirms the API boundary holds
+### Requires VS Code REST Client extension (humao.rest-client)
+
+@baseUrl = http://localhost:8002
+
+
+# ── 422 Input validation ──────────────────────────────────────────────────────
+
+### Empty customer_name → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "",
+  "items": [{ "product_name": "Widget", "quantity": 1, "price": "9.99" }]
+}
+
+###
+
+### Whitespace-only customer_name → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "   ",
+  "items": [{ "product_name": "Widget", "quantity": 1, "price": "9.99" }]
+}
+
+###
+
+### Empty items array → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": []
+}
+
+###
+
+### Empty product_name → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": [{ "product_name": "", "quantity": 1, "price": "9.99" }]
+}
+
+###
+
+### Zero quantity → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": [{ "product_name": "Widget", "quantity": 0, "price": "9.99" }]
+}
+
+###
+
+### Negative quantity → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": [{ "product_name": "Widget", "quantity": -5, "price": "9.99" }]
+}
+
+###
+
+### Negative price → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": [{ "product_name": "Widget", "quantity": 1, "price": "-1.00" }]
+}
+
+###
+
+### Missing required field (no customer_name) → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "items": [{ "product_name": "Widget", "quantity": 1, "price": "9.99" }]
+}
+
+###
+
+### Missing required field (no items) → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice"
+}
+
+###
+
+### Wrong type — quantity as string → 422
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": [{ "product_name": "Widget", "quantity": "one", "price": "9.99" }]
+}
+
+
+# ── 404 Not found ─────────────────────────────────────────────────────────────
+
+### Get non-existent order → 404
+GET {{baseUrl}}/orders/00000000-0000-0000-0000-000000000000
+
+###
+
+### Delete non-existent order → 404
+DELETE {{baseUrl}}/orders/00000000-0000-0000-0000-000000000000
+
+###
+
+### Invalid UUID format → 422
+GET {{baseUrl}}/orders/not-a-uuid
+
+
+# ── 409 Conflict ──────────────────────────────────────────────────────────────
+
+### Cancel a non-PENDING order → 409
+### First create an order and wait 5 min for scheduler to promote it to PROCESSING,
+### then paste that order ID here.
+@processingOrderId = REPLACE_WITH_PROCESSING_ORDER_ID
+
+DELETE {{baseUrl}}/orders/{{processingOrderId}}

@@ -1,0 +1,102 @@
+### EC-OPS — Orders API
+### Happy-path CRUD scenarios
+### Requires VS Code REST Client extension (humao.rest-client)
+
+@baseUrl = http://localhost:8002
+
+# ── Health ────────────────────────────────────────────────────────────────────
+
+### Health check
+GET {{baseUrl}}/health
+
+
+# ── Create ────────────────────────────────────────────────────────────────────
+
+### Create order — single item
+# @name order1
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Alice",
+  "items": [
+    { "product_name": "Wireless Mouse", "quantity": 1, "price": "29.99" }
+  ]
+}
+
+###
+
+### Create order — multiple items
+# @name order2
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Bob",
+  "items": [
+    { "product_name": "Mechanical Keyboard", "quantity": 1, "price": "89.99" },
+    { "product_name": "USB-C Hub",           "quantity": 2, "price": "34.50" },
+    { "product_name": "Monitor Stand",       "quantity": 1, "price": "45.00" }
+  ]
+}
+
+###
+
+### Create order — high quantity, decimal price
+# @name order3
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customer_name": "Carol",
+  "items": [
+    { "product_name": "AAA Batteries (pack)", "quantity": 10, "price": "4.99" },
+    { "product_name": "AA Batteries (pack)",  "quantity": 5,  "price": "5.49" }
+  ]
+}
+
+
+# ── Read ──────────────────────────────────────────────────────────────────────
+
+### Get order by ID — paste an id from a create response above
+@orderId = REPLACE_WITH_ORDER_ID
+
+GET {{baseUrl}}/orders/{{orderId}}
+
+###
+
+### List all orders
+GET {{baseUrl}}/orders
+
+###
+
+### List PENDING orders
+GET {{baseUrl}}/orders?status=PENDING
+
+###
+
+### List PROCESSING orders
+GET {{baseUrl}}/orders?status=PROCESSING
+
+###
+
+### List SHIPPED orders
+GET {{baseUrl}}/orders?status=SHIPPED
+
+###
+
+### List DELIVERED orders
+GET {{baseUrl}}/orders?status=DELIVERED
+
+
+# ── Cancel ────────────────────────────────────────────────────────────────────
+
+### Cancel a PENDING order — paste a PENDING order id
+@pendingOrderId = REPLACE_WITH_PENDING_ORDER_ID
+
+DELETE {{baseUrl}}/orders/{{pendingOrderId}}
+
+###
+
+### Verify the cancelled order is gone (404)
+GET {{baseUrl}}/orders/{{pendingOrderId}}
