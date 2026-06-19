@@ -64,9 +64,9 @@ tasks:
     src/main.py: blob:07beccdd437f5dc455b25d8ed80d81ca16f44b1a
     tests/agent/test_agui_stream.py: blob:bd53051ecb7524044701fe2ac5572ef04437d945
   T010:
-    src/agent/events.py: not_yet_created
-    src/agent/agui_stream.py: not_yet_created
-    tests/agent/test_a2ui_events.py: not_yet_created
+    src/agent/events.py: blob:47c9a4f9268061ea9f7cc06d7c0a66b691c1141b
+    src/agent/agui_stream.py: blob:63749eb4fe3c5b5d2d29dd12b7db12b838672f26
+    tests/agent/test_a2ui_events.py: blob:65c806a65b88e955807a1ce86e4b2f3a004f3566
   T011:
     frontend/index.html: not_yet_created
     frontend/app.js: not_yet_created

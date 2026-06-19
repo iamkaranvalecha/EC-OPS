@@ -138,7 +138,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - Agent emits CustomEvent blocks with `type: ui_action` (order cards, status badges) embedded in the AG-UI SSE stream.
   - `uv run pytest tests/agent/test_a2ui_events.py` passes: asserts a `ui_action` event carrying an order payload is emitted after a successful order tool call.
 - **Goal signals**: S8, S9
-- **Status**: [ ]
+- **Issue**: #16
+- **Status**: [x]
 
 ## T011 — Chat frontend
 - **Phase**: 3
