@@ -46,7 +46,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - `get_order` raises `OrderNotFound` for unknown IDs.
   - `uv run pytest tests/orders/test_service.py` passes: covers happy paths, status filtering, cancel-non-PENDING rejection, and not-found.
 - **Goal signals**: S1, S2, S3, S4
-- **Status**: [ ]
+- **Status**: [x]
 
 ## T004 — REST API router
 - **Phase**: 1

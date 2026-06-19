@@ -417,6 +417,10 @@ db_naming:          <snake_case | camelCase>
 #                  auto = stage + commit automatically after each task
 #                  off  = never touch git (commit manually)
 commit_strategy:    ask
+
+# branch_strategy: auto   = create feat/<TASK_ID>-<title> branch if on main/master/develop/trunk
+#                  manual = you create and switch branches yourself
+branch_strategy:    auto
 # ─────────────────────────────────────────────────────────────────────────────
 ```
 Verify the file was written by reading it back.
@@ -600,42 +604,100 @@ For each task in this phase (in order):
 
 ### § Commit flow (shared by 2b and speckit-loop)
 
-Read `commit_strategy` from `.specify/preferences.md`.
-If the field is absent (project predates this preference): default to `ask`.
-Never default to `off` — that silently regresses existing projects.
+Read `commit_strategy` from `.specify/preferences.md` (default `ask` if absent).
+Read `branch_strategy` from `.specify/preferences.md` (default `auto` if absent).
+Never default to `off` for either — that silently regresses existing projects.
 
-Generate commit message:
+**If `commit_strategy: off`**: print files that need manual staging and skip all steps below.
+```
+Files ready to commit manually:
+  <SCOPE files>
+  .specify/<FEATURE_SLUG>/tasks.md
+  .specify/<FEATURE_SLUG>/.fingerprint
+```
+
+**Otherwise (ask or auto), run these steps in order:**
+
+**Step 1 — Pull**
+```bash
+git diff --cached --quiet || git restore --staged .
+BRANCH=$(git branch --show-current)
+git pull --rebase origin "$BRANCH" 2>&1
+```
+If non-zero exit: **STOP** — "Pull failed — resolve conflicts first, then re-run."
+
+**Step 2 — Branch (if branch_strategy: auto)**
+If `BRANCH` is `main`, `master`, `develop`, or `trunk`:
+```bash
+NEW_BRANCH="feat/<TASK_ID>-<task-title-lowercased-kebab>"
+if git branch --list "$NEW_BRANCH" | grep -q .; then
+  git checkout "$NEW_BRANCH"
+  # Print: Switched to existing branch: $NEW_BRANCH
+else
+  git checkout -b "$NEW_BRANCH"
+  # Print: Created branch: $NEW_BRANCH
+fi
+```
+Update `BRANCH = NEW_BRANCH`.
+If already on a feature branch: commit to it as-is.
+
+**Step 3 — Stage SCOPE files**
+```bash
+git add <SCOPE files>
+```
+
+**Step 4 — Update fingerprint** (now git ls-files -s returns real SHAs for staged files)
+```bash
+for file in <SCOPE files>; do
+  blob=$(git ls-files -s "$file" 2>/dev/null | awk '{print $2}')
+  [ -n "$blob" ] && sed -i "s|$(printf '%s\n' "$file" | sed 's/[[\.*^$()+?{|]/\\&/g'): not_yet_created|$(printf '%s\n' "$file" | sed 's/[[\.*^$()+?{|]/\\&/g'): blob:$blob|" "$FEATURE_DIR/.fingerprint" 2>/dev/null
+done
+```
+
+**Step 5 — Stage .specify/ files**
+```bash
+git add ".specify/$FEATURE_SLUG/tasks.md" ".specify/$FEATURE_SLUG/.fingerprint"
+```
+
+**Step 6 — Build commit message**
 ```
 <TASK_TITLE lowercased as imperative verb phrase>
 
 Task:    <TASK_ID>
 Spec:    <SPEC_REQ>
 Signals: <goal signals advanced>
+<if ISSUE_NUM ≠ N/A: "Closes: #<ISSUE_NUM>">
 ```
 First line: lowercase TASK_TITLE; if it reads as a noun, prepend "implement".
 
-**If `commit_strategy: off`**: skip — print nothing extra.
+**Step 7 — Commit**
 
-**If `commit_strategy: ask`**:
+If `commit_strategy: ask`:
 ```
 Stage and commit? (yes / no / edit message)
-  Files:   <SCOPE files, one per line>
+  Branch:  <BRANCH>
+  Files:   <SCOPE files + tasks.md + .fingerprint, one per line>
   Message: "<generated message>"
 ```
 STOP and wait.
-- `yes` → `git add <SCOPE files> && git commit -m "<message>"`; print the commit SHA; print "Push to remote on your schedule."
-- `no` → print "Files left unstaged." Resume pipeline.
-- `edit message` → STOP again; ask for message; on reply → `git add <SCOPE files> && git commit -m "<user message>"`; print SHA; print "Push to remote on your schedule."
+- `yes` → `git commit -m "<message>"`; capture SHA; print "Push to remote on your schedule."
+- `no` → `git restore --staged .`; print "Unstaged. Commit manually when ready." Stop.
+- `edit message` → STOP; on reply → `git commit -m "<user message>"`; capture SHA; print "Push to remote on your schedule."
 
-**If `commit_strategy: auto`**:
+If `commit_strategy: auto`:
 ```bash
-git add <SCOPE files>
 git commit -m "<generated message>"
 ```
-Print: `Committed: <SHA> — <TASK_ID>: <TASK_TITLE>`
-Print: `Push to remote on your schedule.`
+Capture SHA. Print: `Committed: <SHA> — <TASK_ID>: <TASK_TITLE>` · `Push to remote on your schedule.`
 
-Always stage only the explicit SCOPE file list. Never use `git add .` or `git add -A`.
+**Step 8 — Post review comment** (only if commit happened and ISSUE_NUM ≠ N/A)
+```
+COMMENT issue=<ISSUE_NUM> body="Committed <SHA> to `<BRANCH>`. Ready for your review.
+
+Files: <SCOPE files, one per line>"
+```
+
+Always stage only the explicit SCOPE file list + tasks.md + .fingerprint. Never use `git add .` or `git add -A`.
 
 ---
 
