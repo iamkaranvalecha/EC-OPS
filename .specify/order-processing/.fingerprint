@@ -1,0 +1,73 @@
+# Auto-generated — do not edit manually.
+# Tracks blob SHAs of all SCOPE files at plan time.
+# Updated by orchestrator after each phase.
+spec_blob:  pending
+goal_blob:  pending
+plan_blob:  pending
+tasks_blob: pending
+
+tasks:
+  T001:
+    pyproject.toml: not_yet_created
+    .env.example: not_yet_created
+    .gitignore: blob:83972fadc2724842e111d0d3e2829a59ae3d3f45
+    README.md: blob:40ffed406d06d79a303a4494c42d5d108a7a9ef9
+    src/__init__.py: not_yet_created
+    src/main.py: not_yet_created
+    src/core/__init__.py: not_yet_created
+    src/core/config.py: not_yet_created
+    src/orders/__init__.py: not_yet_created
+    src/scheduler/__init__.py: not_yet_created
+    src/agent/__init__.py: not_yet_created
+    tests/__init__.py: not_yet_created
+    tests/conftest.py: not_yet_created
+  T002:
+    src/core/database.py: not_yet_created
+    src/orders/models.py: not_yet_created
+    src/orders/schemas.py: not_yet_created
+    alembic.ini: not_yet_created
+    migrations/env.py: not_yet_created
+    migrations/versions/0001_create_orders.py: not_yet_created
+    tests/orders/test_models.py: not_yet_created
+  T003:
+    src/orders/service.py: not_yet_created
+    src/orders/exceptions.py: not_yet_created
+    tests/orders/test_service.py: not_yet_created
+  T004:
+    src/orders/router.py: not_yet_created
+    src/core/dependencies.py: not_yet_created
+    src/main.py: not_yet_created
+    tests/orders/test_router.py: not_yet_created
+    tests/integration/test_orders_api.py: not_yet_created
+  T005:
+    src/scheduler/jobs.py: not_yet_created
+    src/scheduler/setup.py: not_yet_created
+    src/main.py: not_yet_created
+    tests/scheduler/test_jobs.py: not_yet_created
+  T006:
+    tests/conftest.py: not_yet_created
+    tests/integration/test_orders_api.py: not_yet_created
+    tests/scheduler/test_jobs.py: not_yet_created
+  T007:
+    src/agent/mcp_server.py: not_yet_created
+    src/agent/tools.py: not_yet_created
+    tests/agent/test_mcp_server.py: not_yet_created
+  T008:
+    src/agent/a2a_router.py: not_yet_created
+    src/agent/executor.py: not_yet_created
+    src/main.py: not_yet_created
+    tests/agent/test_a2a.py: not_yet_created
+    tests/integration/test_a2a_flow.py: not_yet_created
+  T009:
+    src/agent/agui_stream.py: not_yet_created
+    src/agent/events.py: not_yet_created
+    src/main.py: not_yet_created
+    tests/agent/test_agui_stream.py: not_yet_created
+  T010:
+    src/agent/events.py: not_yet_created
+    src/agent/agui_stream.py: not_yet_created
+    tests/agent/test_a2ui_events.py: not_yet_created
+  T011:
+    frontend/index.html: not_yet_created
+    frontend/app.js: not_yet_created
+    frontend/styles.css: not_yet_created
