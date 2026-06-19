@@ -53,11 +53,11 @@ tasks:
     src/agent/tools.py: blob:4e98bc78cc34c34f6453d404f1bbc1b5144cdd4c
     tests/agent/test_mcp_server.py: blob:4958c62afaf8a5570bc3b8b25c60d6def65df3ba
   T008:
-    src/agent/a2a_router.py: not_yet_created
-    src/agent/executor.py: not_yet_created
-    src/main.py: not_yet_created
-    tests/agent/test_a2a.py: not_yet_created
-    tests/integration/test_a2a_flow.py: not_yet_created
+    src/agent/a2a_router.py: blob:c8471c010ea84e6c94f867f46c350a4119ac9409
+    src/agent/executor.py: blob:9b265316aa39eb7b72def2a5c9b70009a2a710f0
+    src/main.py: blob:5b4e41c3e9fc8287b09219ee25739fcaa928804b
+    tests/agent/test_a2a.py: blob:237bb11121912b3647431952f8cac33785272324
+    tests/integration/test_a2a_flow.py: blob:ae47795644c8b39f67b3404610bd6b42f57c3d48
   T009:
     src/agent/agui_stream.py: not_yet_created
     src/agent/events.py: not_yet_created
