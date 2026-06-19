@@ -171,3 +171,81 @@ async def test_delete_order_returns_404_when_not_found(client, mock_session):
             response = await ac.delete(f"/orders/{order_id}")
 
     assert response.status_code == 404
+
+
+# ── Input validation (422) ────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_post_orders_422_empty_customer_name(client):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/orders",
+            json={
+                "customer_name": "",
+                "items": [{"product_name": "Widget", "quantity": 1, "price": "5.00"}],
+            },
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_orders_422_empty_items_list(client):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/orders",
+            json={"customer_name": "Alice", "items": []},
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_orders_422_zero_quantity(client):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/orders",
+            json={
+                "customer_name": "Alice",
+                "items": [{"product_name": "Widget", "quantity": 0, "price": "5.00"}],
+            },
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_orders_422_negative_quantity(client):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/orders",
+            json={
+                "customer_name": "Alice",
+                "items": [{"product_name": "Widget", "quantity": -1, "price": "5.00"}],
+            },
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_orders_422_negative_price(client):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/orders",
+            json={
+                "customer_name": "Alice",
+                "items": [{"product_name": "Widget", "quantity": 1, "price": "-1.00"}],
+            },
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_orders_422_empty_product_name(client):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/orders",
+            json={
+                "customer_name": "Alice",
+                "items": [{"product_name": "", "quantity": 1, "price": "5.00"}],
+            },
+        )
+    assert response.status_code == 422

@@ -22,7 +22,17 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-app = FastAPI(title="EC-OPS", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title="EC-OPS",
+    version="0.1.0",
+    description=(
+        "E-Commerce Order Processing System — REST API, background scheduler, "
+        "MCP tools, A2A protocol, and AG-UI SSE agent streaming."
+    ),
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan,
+)
 app.include_router(orders_router)
 app.include_router(a2a_router)
 app.include_router(agui_router)

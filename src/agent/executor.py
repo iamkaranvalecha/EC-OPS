@@ -7,6 +7,7 @@ from anthropic import AsyncAnthropic
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.agent.tools import build_mcp_server
+from src.core.config import settings
 
 
 @dataclass
@@ -25,7 +26,10 @@ async def run_executor(
     If anthropic_client is None, creates one from env (ANTHROPIC_API_KEY).
     """
     if anthropic_client is None:
-        anthropic_client = AsyncAnthropic()
+        anthropic_client = AsyncAnthropic(
+            base_url=settings.lmstudio_base_url,
+            api_key=settings.anthropic_api_key,
+        )
 
     mcp = build_mcp_server(session_factory)
     available_tools = await mcp.list_tools()
@@ -43,11 +47,11 @@ async def run_executor(
     messages = [{"role": "user", "content": message}]
     tool_calls: list[dict[str, Any]] = []
 
-    # Agentic loop: keep going until Claude stops calling tools
+    # Agentic loop: keep going until model stops calling tools
     while True:
         response = await anthropic_client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1024,
+            model=settings.lm_model,
+            max_tokens=3000,
             tools=anthropic_tools,
             messages=messages,
         )
@@ -55,7 +59,7 @@ async def run_executor(
         # Collect assistant turn
         messages.append({"role": "assistant", "content": response.content})
 
-        if response.stop_reason == "end_turn":
+        if response.stop_reason in ("end_turn", "stop"):
             # Extract final text
             text = next(
                 (block.text for block in response.content if hasattr(block, "text")),

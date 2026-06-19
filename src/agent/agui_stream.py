@@ -18,13 +18,60 @@ from src.agent.events import (
     UiAction,
 )
 from src.agent.tools import build_mcp_server
+from src.core.config import settings as _settings
 from src.core.database import async_session as _prod_session_factory
 
 router = APIRouter(tags=["agui"])
 
 _MAX_ITERATIONS = 10
-# Tools whose single-order JSON result warrants an order-card ui_action event
 _ORDER_CARD_TOOLS = frozenset({"create_order_tool", "get_order_tool"})
+
+
+class _ReasoningFilter:
+    """Strip <think>…</think> reasoning blocks from streaming text.
+
+    Handles tag boundaries split across chunks so no reasoning leaks
+    regardless of how the model streams its output.
+    """
+
+    _OPEN = "<think>"
+    _CLOSE = "</think>"
+
+    def __init__(self) -> None:
+        self._in_think = False
+        self._tail = ""  # chars held back while a partial open-tag is possible
+
+    def feed(self, chunk: str) -> str:
+        """Feed one streamed chunk; return clean text to emit (may be empty)."""
+        self._tail += chunk
+        out: list[str] = []
+
+        while self._tail:
+            if self._in_think:
+                idx = self._tail.find(self._CLOSE)
+                if idx == -1:
+                    self._tail = ""
+                    break
+                self._tail = self._tail[idx + len(self._CLOSE):]
+                self._in_think = False
+            else:
+                idx = self._tail.find(self._OPEN)
+                if idx == -1:
+                    # No open tag visible — but the tail might end with a partial "<think"
+                    hold = 0
+                    for n in range(1, len(self._OPEN)):
+                        if self._OPEN.startswith(self._tail[-n:]):
+                            hold = n
+                            break
+                    emit_to = len(self._tail) - hold
+                    out.append(self._tail[:emit_to])
+                    self._tail = self._tail[emit_to:]
+                    break
+                out.append(self._tail[:idx])
+                self._tail = self._tail[idx + len(self._OPEN):]
+                self._in_think = True
+
+        return "".join(out)
 
 
 async def stream_executor(
@@ -36,9 +83,13 @@ async def stream_executor(
 
     Event order: RunStarted -> TextDelta* -> (ToolCallStart, ToolCallResult)* -> RunFinished
     RunFinished is always emitted, even if an exception occurs mid-stream.
+    Reasoning tokens (<think>…</think>) are stripped before any TextDelta is emitted.
     """
     if anthropic_client is None:
-        anthropic_client = AsyncAnthropic()
+        anthropic_client = AsyncAnthropic(
+            base_url=_settings.lmstudio_base_url,
+            api_key=_settings.anthropic_api_key,
+        )
 
     mcp = build_mcp_server(session_factory)
     available_tools = await mcp.list_tools()
@@ -54,25 +105,25 @@ async def stream_executor(
     try:
         for _ in range(_MAX_ITERATIONS):
             current_text = ""
+            _filter = _ReasoningFilter()
 
             async with anthropic_client.messages.stream(
-                model="claude-sonnet-4-6",
-                max_tokens=1024,
+                model=_settings.lm_model,
+                max_tokens=3000,
                 tools=anthropic_tools,
                 messages=messages,
             ) as stream:
-                async for event in stream:
-                    if type(event).__name__ == "RawContentBlockDeltaEvent":
-                        delta = event.delta
-                        if hasattr(delta, "text") and delta.text:
-                            current_text += delta.text
-                            yield {"data": TextDelta(delta=delta.text).to_sse()}
+                async for text_chunk in stream.text_stream:
+                    clean = _filter.feed(text_chunk)
+                    if clean:
+                        current_text += clean
+                        yield {"data": TextDelta(delta=clean).to_sse()}
 
                 response = await stream.get_final_message()
 
             messages.append({"role": "assistant", "content": response.content})
 
-            if response.stop_reason == "end_turn":
+            if response.stop_reason in ("end_turn", "stop"):
                 break
 
             if response.stop_reason == "tool_use":
@@ -94,7 +145,6 @@ async def stream_executor(
 
                     yield {"data": ToolCallResult(tool_call_id=tc_id, result=output).to_sse()}
 
-                    # Emit ui_action for order-returning tools only (whitelist by name)
                     if block.name in _ORDER_CARD_TOOLS:
                         try:
                             parsed = json.loads(output)
