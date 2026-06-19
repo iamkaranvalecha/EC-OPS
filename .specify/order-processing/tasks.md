@@ -126,7 +126,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - Emits AG-UI events in order: RunStarted, TextDelta, ToolCallStart, ToolCallResult, RunFinished.
   - `uv run pytest tests/agent/test_agui_stream.py` passes: consumes the SSE stream for a sample prompt and asserts the ordered event types.
 - **Goal signals**: S8
-- **Status**: [ ]
+- **Issue**: #14
+- **Status**: [x]
 
 ## T010 — A2UI ui_action events
 - **Phase**: 3

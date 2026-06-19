@@ -59,10 +59,10 @@ tasks:
     tests/agent/test_a2a.py: blob:237bb11121912b3647431952f8cac33785272324
     tests/integration/test_a2a_flow.py: blob:ae47795644c8b39f67b3404610bd6b42f57c3d48
   T009:
-    src/agent/agui_stream.py: not_yet_created
-    src/agent/events.py: not_yet_created
-    src/main.py: not_yet_created
-    tests/agent/test_agui_stream.py: not_yet_created
+    src/agent/agui_stream.py: blob:03906f474e27695b5e0a27de64b58dede18629b3
+    src/agent/events.py: blob:d4c1ffa7c78454f5000a830731c2ef5dc8e02ce7
+    src/main.py: blob:07beccdd437f5dc455b25d8ed80d81ca16f44b1a
+    tests/agent/test_agui_stream.py: blob:bd53051ecb7524044701fe2ac5572ef04437d945
   T010:
     src/agent/events.py: not_yet_created
     src/agent/agui_stream.py: not_yet_created
