@@ -40,10 +40,10 @@ tasks:
     tests/orders/test_router.py: blob:b939f694b62bd0f98b3daaeaedef6f0d4b9cc726
     tests/integration/test_orders_api.py: blob:67b76198d4a6424e295d11de02efff060672470d
   T005:
-    src/scheduler/jobs.py: not_yet_created
-    src/scheduler/setup.py: not_yet_created
-    src/main.py: not_yet_created
-    tests/scheduler/test_jobs.py: not_yet_created
+    src/scheduler/jobs.py: blob:53e5096eb48a1bae08008f4c215f4beee6091951
+    src/scheduler/setup.py: blob:f584029c20c7c85efc30d83b20b8b1f4dcd132db
+    src/main.py: blob:ed8f9df5546debde87508c389d13b9317bbfdc93
+    tests/scheduler/test_jobs.py: blob:ccb546db04e70f9122f4484c3029f53be4499e5a
   T006:
     tests/conftest.py: not_yet_created
     tests/integration/test_orders_api.py: not_yet_created
