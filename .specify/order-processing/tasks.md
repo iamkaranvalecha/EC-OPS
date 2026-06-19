@@ -72,7 +72,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - Job `promote_pending_orders` is registered on a 5-minute interval and sets all PENDING orders to PROCESSING.
   - `uv run pytest tests/scheduler/test_jobs.py` passes: directly invokes the job against seeded data, asserting PENDING → PROCESSING and that PROCESSING/SHIPPED/DELIVERED orders are unchanged.
 - **Goal signals**: S5
-- **Status**: [ ]
+- **Issue**: #6
+- **Status**: [x]
 
 ## T006 — Test suite consolidation + coverage
 - **Phase**: 1
