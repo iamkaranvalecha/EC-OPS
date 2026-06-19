@@ -59,7 +59,8 @@ speckit-loop picks the first [ ] task when run with no arguments.
   - `uv run pytest tests/orders/test_router.py` passes (handler-level).
   - `uv run pytest tests/integration/test_orders_api.py` passes: httpx client against a real test DB walks create → get → list → cancel and asserts 409 when cancelling a non-PENDING order.
 - **Goal signals**: S1, S2, S3, S4
-- **Status**: [ ]
+- **Issue**: #4
+- **Status**: [x]
 
 ## T005 — Background scheduler
 - **Phase**: 1
