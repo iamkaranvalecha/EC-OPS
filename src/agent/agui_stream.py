@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -8,13 +9,22 @@ from fastapi import APIRouter, Query
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sse_starlette.sse import EventSourceResponse
 
-from src.agent.events import RunFinished, RunStarted, TextDelta, ToolCallResult, ToolCallStart
+from src.agent.events import (
+    RunFinished,
+    RunStarted,
+    TextDelta,
+    ToolCallResult,
+    ToolCallStart,
+    UiAction,
+)
 from src.agent.tools import build_mcp_server
 from src.core.database import async_session as _prod_session_factory
 
 router = APIRouter(tags=["agui"])
 
 _MAX_ITERATIONS = 10
+# Tools whose single-order JSON result warrants an order-card ui_action event
+_ORDER_CARD_TOOLS = frozenset({"create_order_tool", "get_order_tool"})
 
 
 async def stream_executor(
@@ -83,6 +93,15 @@ async def stream_executor(
                         output = str(raw[0])
 
                     yield {"data": ToolCallResult(tool_call_id=tc_id, result=output).to_sse()}
+
+                    # Emit ui_action for order-returning tools only (whitelist by name)
+                    if block.name in _ORDER_CARD_TOOLS:
+                        try:
+                            parsed = json.loads(output)
+                            if isinstance(parsed, dict) and "id" in parsed:
+                                yield {"data": UiAction(payload=parsed).to_sse()}
+                        except (json.JSONDecodeError, TypeError):
+                            pass
 
                     tool_results.append({
                         "type": "tool_result",

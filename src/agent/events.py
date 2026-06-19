@@ -52,6 +52,21 @@ class ToolCallResult:
 
 
 @dataclass
+class UiAction:
+    payload: dict
+    action: str = "order_card"
+    type: str = "CustomEvent"
+    name: str = "ui_action"
+
+    def to_sse(self) -> str:
+        return json.dumps({
+            "type": self.type,
+            "name": self.name,
+            "value": {"action": self.action, "payload": self.payload},
+        })
+
+
+@dataclass
 class RunFinished:
     type: str = "RunFinished"
 
