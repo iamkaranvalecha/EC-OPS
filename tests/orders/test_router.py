@@ -3,11 +3,13 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from src.auth.dependencies import get_current_user
+from src.auth.models import User
 from src.core.dependencies import get_session
 from src.main import app
 from src.orders.exceptions import OrderNotCancellable, OrderNotFound
@@ -49,7 +51,11 @@ def client(mock_session):
     async def override_get_session():
         yield mock_session
 
+    async def override_get_current_user():
+        return User(id=uuid.uuid4(), username="testuser", hashed_password="", is_active=True)
+
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_get_current_user
     yield
     app.dependency_overrides.clear()
 
@@ -131,7 +137,7 @@ async def test_get_orders_list_with_status_filter(client, mock_session):
     body = response.json()
     assert len(body) == 1
     assert body[0]["status"] == "PENDING"
-    mock_list.assert_called_once_with(mock_session, status=OrderStatus.PENDING)
+    mock_list.assert_called_once_with(mock_session, status=OrderStatus.PENDING, user_id=ANY)
 
 
 @pytest.mark.asyncio

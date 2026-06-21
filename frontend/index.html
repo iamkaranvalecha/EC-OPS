@@ -7,9 +7,35 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="chat-container">
+
+  <!-- Login screen — shown until a valid token is stored -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-card">
+      <h2 class="login-title">EC-OPS</h2>
+      <p class="login-subtitle">Order Agent</p>
+      <form id="login-form" method="post" action="/auth/token" autocomplete="on">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <p class="login-error" id="login-error"></p>
+        <button type="submit" id="login-btn">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chat UI — hidden until logged in -->
+  <div class="chat-container hidden" id="chat-container">
     <header class="chat-header">
       <h1>EC-OPS Order Agent</h1>
+      <div class="header-user">
+        <span id="header-username"></span>
+        <button id="logout-btn">Sign out</button>
+      </div>
     </header>
     <div class="messages" id="messages"></div>
     <div class="input-row">
@@ -17,6 +43,7 @@
       <button id="send-btn">Send</button>
     </div>
   </div>
+
   <script src="app.js"></script>
 </body>
 </html>

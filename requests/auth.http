@@ -1,0 +1,81 @@
+### EC-OPS — Authentication
+### Register a user and obtain a JWT Bearer token.
+### Requires VS Code REST Client extension (humao.rest-client)
+
+@baseUrl = http://localhost:8002
+
+
+# ── Register ──────────────────────────────────────────────────────────────────
+
+### Register a new user — returns 201 with user object
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Password1!",
+  "email": "admin@example.com"
+}
+
+###
+
+### Register — duplicate username → 409
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "AnotherPass1!"
+}
+
+###
+
+### Register — password too short → 422
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "baduser",
+  "password": "short"
+}
+
+
+# ── Login (get JWT) ───────────────────────────────────────────────────────────
+
+### Login — returns { "access_token": "...", "token_type": "bearer" }
+# @name login
+POST {{baseUrl}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=Password1!
+
+###
+
+### Login — wrong password → 401
+POST {{baseUrl}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=wrongpassword
+
+
+# ── Test token ────────────────────────────────────────────────────────────────
+# Copy the access_token value from the login response above,
+# paste it below, then run any request in orders.http / agent.http.
+
+@token = PASTE_ACCESS_TOKEN_HERE
+
+### Verify token works — list orders
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+###
+
+### No token → 401
+GET {{baseUrl}}/orders
+
+###
+
+### Bad token → 401
+GET {{baseUrl}}/orders
+Authorization: Bearer not.a.real.token

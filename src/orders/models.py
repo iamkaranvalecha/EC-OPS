@@ -19,12 +19,16 @@ class OrderStatus(str, enum.Enum):
     PROCESSING = "PROCESSING"
     SHIPPED = "SHIPPED"
     DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
 
 
 class Order(Base):
     __tablename__ = "orders"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
+    )
     customer_name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[OrderStatus] = mapped_column(
         Enum(OrderStatus),

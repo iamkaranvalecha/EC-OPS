@@ -88,15 +88,19 @@ async def main() -> None:
         )
 
     print("\nRunning migrations...")
+    # Delegate to scripts/migrate.py so all migration logic lives in one place.
     result = subprocess.run(
-        ["uv", "run", "alembic", "upgrade", "head"],
+        ["uv", "run", "python", "scripts/migrate.py"],
         cwd=ROOT,
     )
     if result.returncode != 0:
         sys.exit("\nMigration failed — see output above.")
 
     print("\n[done] Database ready.")
-    print("       Start the server: uv run python -m src.main")
+    print(
+        "       Start the server: uv run python -m src.main"
+        " --reload_dirs=[\"src\"]"
+    )
 
 
 if __name__ == "__main__":

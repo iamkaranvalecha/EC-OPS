@@ -2,8 +2,13 @@
 ### AG-UI SSE stream and A2A protocol
 ### Requires VS Code REST Client extension (humao.rest-client)
 ### Note: SSE responses stream line-by-line — REST Client shows them as they arrive
+###
+### Authentication: get a token from auth.http first, then paste it below.
+### For the SSE stream you may also pass the token as ?token=<jwt> if your
+### client cannot set a custom header on EventSource.
 
 @baseUrl = http://localhost:8002
+@token = PASTE_ACCESS_TOKEN_HERE
 
 
 # ── AG-UI SSE stream ──────────────────────────────────────────────────────────
@@ -17,16 +22,19 @@
 
 ### Create an order via natural language
 GET {{baseUrl}}/agent/stream?message=Create%20an%20order%20for%20David%20with%202%20notebooks%20at%20%248.50%20each%20and%201%20pen%20at%20%241.25
+Authorization: Bearer {{token}}
 
 ###
 
 ### List all current orders
 GET {{baseUrl}}/agent/stream?message=List%20all%20orders
+Authorization: Bearer {{token}}
 
 ###
 
 ### List only pending orders
 GET {{baseUrl}}/agent/stream?message=Show%20me%20all%20pending%20orders
+Authorization: Bearer {{token}}
 
 ###
 
@@ -34,22 +42,26 @@ GET {{baseUrl}}/agent/stream?message=Show%20me%20all%20pending%20orders
 @agentOrderId = REPLACE_WITH_ORDER_ID
 
 GET {{baseUrl}}/agent/stream?message=Get%20order%20{{agentOrderId}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Cancel an order by ID
 GET {{baseUrl}}/agent/stream?message=Cancel%20order%20{{agentOrderId}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Complex — create then describe
 GET {{baseUrl}}/agent/stream?message=Create%20an%20order%20for%20Emma%20with%203%20items%3A%20a%20laptop%20stand%20for%20%2445%2C%20a%20webcam%20for%20%2279.99%2C%20and%20an%20LED%20desk%20lamp%20for%20%2332.50
+Authorization: Bearer {{token}}
 
 
 # ── A2A Agent Card ────────────────────────────────────────────────────────────
 
 ### Discover agent capabilities
 GET {{baseUrl}}/.well-known/agent.json
+Authorization: Bearer {{token}}
 
 
 # ── A2A Task submission ───────────────────────────────────────────────────────
@@ -58,6 +70,7 @@ GET {{baseUrl}}/.well-known/agent.json
 # @name a2aTask
 POST {{baseUrl}}/a2a/tasks/send
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "message": "Create an order for Frank with 1 standing desk at $349.00"
@@ -69,6 +82,7 @@ Content-Type: application/json
 @taskId = REPLACE_WITH_TASK_ID
 
 GET {{baseUrl}}/a2a/tasks/{{taskId}}
+Authorization: Bearer {{token}}
 
 ###
 
@@ -76,6 +90,7 @@ GET {{baseUrl}}/a2a/tasks/{{taskId}}
 # @name a2aListTask
 POST {{baseUrl}}/a2a/tasks/send
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "message": "List all orders with status PENDING"
@@ -85,3 +100,4 @@ Content-Type: application/json
 
 ### Get non-existent task → 404
 GET {{baseUrl}}/a2a/tasks/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}

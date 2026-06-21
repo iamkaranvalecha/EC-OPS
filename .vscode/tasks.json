@@ -1,0 +1,79 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Server",
+            "type": "shell",
+            "command": "uv run python -m src.main --host 0.0.0.0 --port 8002 --reload --reload-dir src",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "dedicated", "reveal": "always" },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "uv run pytest tests/ --tb=short -v",
+            "group": { "kind": "test", "isDefault": true },
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        },
+        {
+            "label": "Run Eval Tests",
+            "type": "shell",
+            "command": "uv run pytest tests/ -m eval --tb=short -v",
+            "group": "test",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        },
+        {
+            "label": "Run Tests (skip evals)",
+            "type": "shell",
+            "command": "uv run pytest tests/ -m \"not eval\" --tb=short -v",
+            "group": "test",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        },
+        {
+            "label": "Lint",
+            "type": "shell",
+            "command": "uv run ruff check src tests scripts",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        },
+        {
+            "label": "Migrate",
+            "type": "shell",
+            "command": "uv run python scripts/migrate.py",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        },
+        {
+            "label": "Setup",
+            "type": "shell",
+            "command": "uv run python scripts/setup.py",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "dedicated", "reveal": "always" }
+        },
+        {
+            "label": "Generate Postman Collection",
+            "type": "shell",
+            "command": "uv run python scripts/generate_postman.py",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        },
+        {
+            "label": "Generate Insomnia Collection",
+            "type": "shell",
+            "command": "uv run python scripts/generate_insomnia.py",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "panel": "shared", "reveal": "always" }
+        }
+    ]
+}

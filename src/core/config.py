@@ -10,5 +10,13 @@ class Settings(BaseSettings):
     lm_model: str = "Qwen/Qwen2.5-7B-Instruct-GGUF"
     port: int = 8002
 
+    # Auth — override JWT_SECRET_KEY with a strong random string in production
+    jwt_secret_key: str = "change-me-in-production-use-a-long-random-string"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 1440  # 24 hours
+
+    # Logging — set LOG_LEVEL=DEBUG in .env to trace LM Studio requests/responses
+    log_level: str = "INFO"
+
 
 settings = Settings()

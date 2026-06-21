@@ -1,0 +1,25 @@
+# Auto-generated — do not edit manually.
+# Tracks blob SHAs of all SCOPE files at plan time.
+# Updated by orchestrator after each phase.
+spec_blob:  pending
+goal_blob:  pending
+plan_blob:  pending
+tasks_blob: pending
+
+tasks:
+  T001:
+    src/agent/guardrails.py: not_yet_created
+  T002:
+    src/agent/guardrails.py: not_yet_created
+  T003:
+    src/agent/guardrails.py: not_yet_created
+  T004:
+    src/agent/guardrails.py: not_yet_created
+    src/agent/agui_stream.py: not_yet_created
+    src/agent/executor.py: not_yet_created
+  T005:
+    src/agent/guardrails.py: not_yet_created
+  T006:
+    tests/eval/eval_cases.py: not_yet_created
+    tests/eval/test_guardrails_eval.py: not_yet_created
+  T007: {}

@@ -1,19 +1,120 @@
 (function () {
-  const messagesEl = document.getElementById('messages');
-  const inputEl = document.getElementById('message-input');
-  const sendBtn = document.getElementById('send-btn');
+  var TOKEN_KEY = 'ecops_token';
+  var USERNAME_KEY = 'ecops_username';
 
-  let currentBubble = null;
-  let currentSource = null;
+  // ── DOM refs ────────────────────────────────────────────────────────────────
+
+  var loginScreen    = document.getElementById('login-screen');
+  var chatContainer  = document.getElementById('chat-container');
+  var loginForm      = document.getElementById('login-form');
+  var loginError     = document.getElementById('login-error');
+  var loginBtn       = document.getElementById('login-btn');
+  var usernameInput  = document.getElementById('username');
+  var passwordInput  = document.getElementById('password');
+  var headerUsername = document.getElementById('header-username');
+  var logoutBtn      = document.getElementById('logout-btn');
+  var messagesEl     = document.getElementById('messages');
+  var inputEl        = document.getElementById('message-input');
+  var sendBtn        = document.getElementById('send-btn');
+
+  var currentBubble = null;
+  var currentSource = null;
+
+  function setStreaming(active) {
+    sendBtn.disabled = active;
+    inputEl.disabled = active;
+    sendBtn.textContent = active ? '…' : 'Send';
+  }
+
+  // ── Auth state ───────────────────────────────────────────────────────────────
+
+  function getToken()    { return localStorage.getItem(TOKEN_KEY); }
+  function getUsername() { return localStorage.getItem(USERNAME_KEY); }
+
+  function saveToken(token, username) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USERNAME_KEY, username);
+  }
+
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USERNAME_KEY);
+  }
+
+  function showChat(username) {
+    headerUsername.textContent = username;
+    loginScreen.classList.add('hidden');
+    chatContainer.classList.remove('hidden');
+    inputEl.focus();
+  }
+
+  function showLogin(errorMsg) {
+    chatContainer.classList.add('hidden');
+    loginScreen.classList.remove('hidden');
+    loginError.textContent = errorMsg || '';
+    passwordInput.value = '';
+    usernameInput.focus();
+  }
+
+  // ── Login ────────────────────────────────────────────────────────────────────
+
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var username = usernameInput.value.trim();
+    var password = passwordInput.value;
+    if (!username || !password) return;
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing in…';
+    loginError.textContent = '';
+
+    var body = 'username=' + encodeURIComponent(username)
+             + '&password=' + encodeURIComponent(password);
+
+    fetch('/auth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body,
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          return res.json().then(function (d) {
+            throw new Error(d.detail || 'Login failed');
+          });
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        saveToken(data.access_token, username);
+        showChat(username);
+      })
+      .catch(function (err) {
+        loginError.textContent = err.message || 'Login failed';
+      })
+      .finally(function () {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign in';
+      });
+  });
+
+  // ── Logout ───────────────────────────────────────────────────────────────────
+
+  logoutBtn.addEventListener('click', function () {
+    if (currentSource) { currentSource.close(); currentSource = null; }
+    clearToken();
+    showLogin();
+  });
+
+  // ── Chat helpers ─────────────────────────────────────────────────────────────
 
   function scrollToBottom() {
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
   function appendUserMessage(text) {
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'message user';
-    const p = document.createElement('p');
+    var p = document.createElement('p');
     p.textContent = text;
     div.appendChild(p);
     messagesEl.appendChild(div);
@@ -21,7 +122,7 @@
   }
 
   function createAgentBubble() {
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'message agent';
     messagesEl.appendChild(div);
     scrollToBottom();
@@ -29,35 +130,35 @@
   }
 
   function renderOrderCard(payload) {
-    const card = document.createElement('div');
+    var card = document.createElement('div');
     card.className = 'order-card';
 
-    const header = document.createElement('div');
+    var header = document.createElement('div');
     header.className = 'order-card-header';
 
-    const idSpan = document.createElement('span');
+    var idSpan = document.createElement('span');
     idSpan.className = 'order-id';
     idSpan.textContent = 'Order #' + (payload.id || '').slice(0, 8);
 
-    const statusSpan = document.createElement('span');
-    const statusLower = (payload.status || '').toLowerCase();
+    var statusSpan = document.createElement('span');
+    var statusLower = (payload.status || '').toLowerCase();
     statusSpan.className = 'status-badge status-' + statusLower;
     statusSpan.textContent = payload.status || '';
 
     header.appendChild(idSpan);
     header.appendChild(statusSpan);
 
-    const body = document.createElement('div');
+    var body = document.createElement('div');
     body.className = 'order-card-body';
 
-    const customer = document.createElement('p');
+    var customer = document.createElement('p');
     customer.className = 'customer';
     customer.innerHTML = '<strong>Customer:</strong> ' + escapeHtml(payload.customer_name || '');
 
-    const ul = document.createElement('ul');
+    var ul = document.createElement('ul');
     ul.className = 'items-list';
     (payload.items || []).forEach(function (item) {
-      const li = document.createElement('li');
+      var li = document.createElement('li');
       li.textContent = (item.product_name || '') + ' × ' + item.quantity + ' — $' + item.price;
       ul.appendChild(li);
     });
@@ -78,9 +179,12 @@
       .replace(/'/g, '&#039;');
   }
 
+  // ── SSE event handler ────────────────────────────────────────────────────────
+
   function handleEvent(parsed) {
     if (parsed.type === 'RunStarted') {
       currentBubble = createAgentBubble();
+      setStreaming(true);
     } else if (parsed.type === 'TextDelta') {
       if (currentBubble) {
         currentBubble.appendChild(document.createTextNode(parsed.delta));
@@ -88,7 +192,7 @@
       }
     } else if (parsed.type === 'ToolCallStart') {
       if (currentBubble) {
-        const badge = document.createElement('span');
+        var badge = document.createElement('span');
         badge.className = 'badge tool-start';
         badge.textContent = '🔧 calling ' + parsed.tool_name;
         currentBubble.appendChild(badge);
@@ -96,7 +200,7 @@
       }
     } else if (parsed.type === 'ToolCallResult') {
       if (currentBubble) {
-        const badge = document.createElement('span');
+        var badge = document.createElement('span');
         badge.className = 'badge tool-done';
         badge.textContent = '✓ done';
         currentBubble.appendChild(badge);
@@ -112,29 +216,36 @@
         currentSource.close();
         currentSource = null;
       }
+      setStreaming(false);
+      inputEl.focus();
     }
   }
 
-  function sendMessage() {
-    const text = inputEl.value.trim();
-    if (!text) return;
-    inputEl.value = '';
+  // ── Send message ─────────────────────────────────────────────────────────────
 
-    if (currentSource) {
-      currentSource.close();
-      currentSource = null;
-    }
+  function sendMessage() {
+    if (sendBtn.disabled) return;
+    var text = inputEl.value.trim();
+    if (!text) return;
+
+    var token = getToken();
+    if (!token) { showLogin('Session expired — please sign in again.'); return; }
+
+    inputEl.value = '';
+    if (currentSource) { currentSource.close(); currentSource = null; }
 
     appendUserMessage(text);
 
-    const url = '/agent/stream?message=' + encodeURIComponent(text);
-    const source = new EventSource(url);
+    // EventSource can't set headers, so pass the token as a query param.
+    // The backend _resolve_token() accepts both Authorization header and ?token=.
+    var url = '/agent/stream?message=' + encodeURIComponent(text)
+            + '&token=' + encodeURIComponent(token);
+    var source = new EventSource(url);
     currentSource = source;
 
     source.onmessage = function (e) {
       try {
-        const parsed = JSON.parse(e.data);
-        handleEvent(parsed);
+        handleEvent(JSON.parse(e.data));
       } catch (_) {
         // ignore malformed events
       }
@@ -142,13 +253,24 @@
 
     source.onerror = function () {
       if (currentBubble) {
-        const err = document.createElement('p');
+        // A 401 from the server causes an immediate onerror with no retry.
+        // Check if token is still present; if so, it may have expired.
+        var err = document.createElement('p');
         err.className = 'error';
-        err.textContent = 'Connection error.';
+        var tok = getToken();
+        if (!tok) {
+          err.textContent = 'Not authenticated.';
+        } else {
+          err.textContent = 'Connection error — your session may have expired.';
+          clearToken();
+          setTimeout(function () { showLogin('Session expired — please sign in again.'); }, 1500);
+        }
         currentBubble.appendChild(err);
       }
       source.close();
       currentSource = null;
+      setStreaming(false);
+      inputEl.focus();
     };
   }
 
@@ -156,4 +278,15 @@
   inputEl.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') sendMessage();
   });
+
+  // ── Boot ─────────────────────────────────────────────────────────────────────
+
+  var savedToken    = getToken();
+  var savedUsername = getUsername();
+  if (savedToken && savedUsername) {
+    showChat(savedUsername);
+  } else {
+    showLogin();
+  }
+
 }());

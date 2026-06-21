@@ -1,0 +1,70 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Breakpoints work — reload is OFF (debugpy attaches to worker process directly)
+            "name": "Server: Debug",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "src.main:app",
+                "--host", "0.0.0.0",
+                "--port", "8002",
+                "--reload",
+                "--reload-dir", "src"
+            ],
+            "env": {
+                "PYTHONASYNCIODEBUG": "1"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Test: All",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["tests", "--tb=short", "-v"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Test: Eval only",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["tests", "-m", "eval", "--tb=short", "-v"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Test: Skip evals",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["tests", "-m", "not eval", "--tb=short", "-v"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Test: Current file",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["${file}", "--tb=short", "-v"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

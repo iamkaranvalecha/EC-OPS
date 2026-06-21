@@ -1,19 +1,23 @@
 ### EC-OPS — Complex End-to-End Scenarios
 ### Run these in sequence (top to bottom) — copy IDs between steps
 ### Requires VS Code REST Client extension (humao.rest-client)
+###
+### Authentication: get a token from auth.http first, then paste it below.
 
 @baseUrl = http://localhost:8002
+@token = PASTE_ACCESS_TOKEN_HERE
 
 
 # ════════════════════════════════════════════════════════════════════════════
 # SCENARIO 1: Full order lifecycle
-# Create → verify PENDING → cancel → verify gone
+# Create → verify PENDING → cancel (soft-delete) → verify CANCELLED
 # ════════════════════════════════════════════════════════════════════════════
 
 ### Step 1.1 — Create order
 # @name lifecycle_create
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Lifecycle Test",
@@ -29,26 +33,37 @@ Content-Type: application/json
 @lifecycle_id = REPLACE_WITH_ID_FROM_1_1
 
 GET {{baseUrl}}/orders/{{lifecycle_id}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 1.3 — Confirm it appears in PENDING list
 GET {{baseUrl}}/orders?status=PENDING
+Authorization: Bearer {{token}}
 
 ###
 
-### Step 1.4 — Cancel it
+### Step 1.4 — Cancel it (soft-delete — sets status to CANCELLED)
 DELETE {{baseUrl}}/orders/{{lifecycle_id}}
+Authorization: Bearer {{token}}
 
 ###
 
-### Step 1.5 — Verify it is gone (expect 404)
+### Step 1.5 — Verify it is retained with status CANCELLED (200, not 404)
 GET {{baseUrl}}/orders/{{lifecycle_id}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 1.6 — Confirm it no longer appears in PENDING list
 GET {{baseUrl}}/orders?status=PENDING
+Authorization: Bearer {{token}}
+
+###
+
+### Step 1.7 — Confirm it appears in CANCELLED list
+GET {{baseUrl}}/orders?status=CANCELLED
+Authorization: Bearer {{token}}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -59,6 +74,7 @@ GET {{baseUrl}}/orders?status=PENDING
 ### Step 2.1 — Create order A
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Bulk Customer A",
@@ -70,6 +86,7 @@ Content-Type: application/json
 ### Step 2.2 — Create order B
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Bulk Customer B",
@@ -84,6 +101,7 @@ Content-Type: application/json
 ### Step 2.3 — Create order C
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Bulk Customer C",
@@ -94,11 +112,13 @@ Content-Type: application/json
 
 ### Step 2.4 — List all orders (should include A, B, C as PENDING)
 GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 2.5 — List only PENDING
 GET {{baseUrl}}/orders?status=PENDING
+Authorization: Bearer {{token}}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -110,6 +130,7 @@ GET {{baseUrl}}/orders?status=PENDING
 ### Step 3.1 — Create order to be promoted
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Processing Race",
@@ -123,11 +144,13 @@ Content-Type: application/json
 @race_id = REPLACE_WITH_ID_FROM_3_1
 
 GET {{baseUrl}}/orders/{{race_id}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 3.3 — Attempt to cancel a PROCESSING order → expect 409
 DELETE {{baseUrl}}/orders/{{race_id}}
+Authorization: Bearer {{token}}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -137,11 +160,13 @@ DELETE {{baseUrl}}/orders/{{race_id}}
 
 ### Step 4.1 — Ask agent to create order
 GET {{baseUrl}}/agent/stream?message=Create%20an%20order%20for%20Grace%20with%202%20yoga%20mats%20at%20%2422.00%20each%20and%201%20water%20bottle%20at%20%2412.50
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 4.2 — Confirm via REST — should appear in PENDING list
 GET {{baseUrl}}/orders?status=PENDING
+Authorization: Bearer {{token}}
 
 ###
 
@@ -149,6 +174,7 @@ GET {{baseUrl}}/orders?status=PENDING
 @grace_order_id = REPLACE_WITH_ID_FROM_4_2
 
 GET {{baseUrl}}/orders/{{grace_order_id}}
+Authorization: Bearer {{token}}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -160,6 +186,7 @@ GET {{baseUrl}}/orders/{{grace_order_id}}
 # @name a2a_scenario
 POST {{baseUrl}}/a2a/tasks/send
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "message": "Create an order for Henry with 1 ergonomic chair at $350.00 and list all pending orders"
@@ -171,16 +198,19 @@ Content-Type: application/json
 @a2a_task_id = REPLACE_WITH_TASK_ID_FROM_5_1
 
 GET {{baseUrl}}/a2a/tasks/{{a2a_task_id}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 5.3 — Poll again after a few seconds (should be completed)
 GET {{baseUrl}}/a2a/tasks/{{a2a_task_id}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### Step 5.4 — Verify the order was created via REST
 GET {{baseUrl}}/orders?status=PENDING
+Authorization: Bearer {{token}}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -191,6 +221,7 @@ GET {{baseUrl}}/orders?status=PENDING
 ### Step 6.1 — Order with a free item (price = 0.00, allowed by ge=0)
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Promo Customer",
@@ -205,6 +236,7 @@ Content-Type: application/json
 ### Step 6.2 — High-value order
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Enterprise Buyer",
@@ -221,6 +253,7 @@ Content-Type: application/json
 ### Step 6.3 — Large quantity, low unit price
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Stationery Bulk",
