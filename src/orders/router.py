@@ -5,6 +5,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.dependencies import get_current_user
+from src.auth.models import User
 from src.core.dependencies import get_session
 from src.orders.exceptions import OrderNotCancellable, OrderNotFound
 from src.orders.models import OrderStatus
@@ -18,8 +20,9 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 async def create_order_route(
     data: OrderCreate,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> OrderResponse:
-    order = await create_order(data, session)
+    order = await create_order(data, session, user_id=current_user.id)
     return OrderResponse.model_validate(order)
 
 
@@ -27,8 +30,9 @@ async def create_order_route(
 async def list_orders_route(
     status: OrderStatus | None = None,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> list[OrderResponse]:
-    orders = await list_orders(session, status=status)
+    orders = await list_orders(session, status=status, user_id=current_user.id)
     return [OrderResponse.model_validate(o) for o in orders]
 
 
@@ -36,9 +40,10 @@ async def list_orders_route(
 async def get_order_route(
     order_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> OrderResponse:
     try:
-        order = await get_order(order_id, session)
+        order = await get_order(order_id, session, user_id=current_user.id)
     except OrderNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return OrderResponse.model_validate(order)
@@ -48,9 +53,10 @@ async def get_order_route(
 async def cancel_order_route(
     order_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> Response:
     try:
-        await cancel_order(order_id, session)
+        await cancel_order(order_id, session, user_id=current_user.id)
     except OrderNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except OrderNotCancellable as exc:

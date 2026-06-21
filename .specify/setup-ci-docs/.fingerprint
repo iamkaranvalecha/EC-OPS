@@ -1,0 +1,27 @@
+# Auto-generated — do not edit manually.
+# Tracks blob SHAs of all SCOPE files at plan time.
+# Updated by orchestrator after each phase.
+spec_blob:  pending
+goal_blob:  pending
+plan_blob:  pending
+tasks_blob: pending
+
+tasks:
+  T001:
+    scripts/setup.py: not_yet_created
+  T002:
+    scripts/setup.py: not_yet_created
+  T003:
+    scripts/generate_postman.py: not_yet_created
+    tests/scripts/test_generate_postman.py: not_yet_created
+  T004:
+    requests/EC-OPS.postman_collection.json: not_yet_created
+  T005:
+    .github/workflows/ci.yml: not_yet_created
+  T006:
+    docs/ci-tailscale.md: not_yet_created
+    README.md: not_yet_created
+  T007:
+    DESIGN_DECISIONS.md: not_yet_created
+  T008:
+    README.md: not_yet_created

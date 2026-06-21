@@ -4,9 +4,9 @@ A FastAPI backend for order processing with REST API, background scheduler, MCP 
 
 ---
 
-## Quick start (3 steps)
+## Quick start
 
-### 1. Prerequisites
+### Prerequisites
 
 | Tool | Install |
 |---|---|
@@ -16,30 +16,35 @@ A FastAPI backend for order processing with REST API, background scheduler, MCP 
 | pgvector | [github.com/pgvector/pgvector](https://github.com/pgvector/pgvector) — build and install for your PG version |
 | [LM Studio](https://lmstudio.ai) | For AI agent features only — not required for the REST API |
 
-### 2. Configure
+### Automated setup (recommended)
+
+```bash
+uv run python scripts/setup.py
+```
+
+The setup script checks prerequisites, installs dependencies, copies `.env.example` → `.env`
+(first run only — you'll be prompted to set your database password), creates the databases,
+enables pgvector, runs migrations, and prints a full "what to do next" guide.
+
+To start the server immediately after setup:
+
+```bash
+uv run python scripts/setup.py --start
+```
+
+Open [http://localhost:8002](http://localhost:8002) to see the chat frontend.
+
+### Manual setup
+
+If you prefer step-by-step control:
 
 ```bash
 cp .env.example .env
-```
-
-Open `.env` and set your database password:
-
-```
-DATABASE_URL=postgresql+asyncpg://postgres:<your-password>@localhost:5432/ecops
-TEST_DATABASE_URL=postgresql+asyncpg://postgres:<your-password>@localhost:5432/ecops_test
-```
-
-Everything else has working defaults.
-
-### 3. Install, set up DB, and start
-
-```bash
+# Edit .env and set DATABASE_URL / TEST_DATABASE_URL passwords
 uv sync --extra dev
 uv run python scripts/db_setup.py
 uv run python -m src.main
 ```
-
-`db_setup.py` creates the databases, enables pgvector, and runs migrations. Open [http://localhost:8002](http://localhost:8002) to see the chat frontend.
 
 ---
 
@@ -61,43 +66,202 @@ The app uses LM Studio's Anthropic-compatible endpoint — no Anthropic account 
 
 ## API reference
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/orders` | Create an order — returns 201 + full order |
-| `GET` | `/orders/{id}` | Get order by ID — 404 if not found |
-| `GET` | `/orders?status=PENDING` | List all orders, optional status filter |
-| `DELETE` | `/orders/{id}` | Cancel a PENDING order — 409 if already processing |
-| `GET` | `/health` | Health check |
-| `GET` | `/agent/stream?message=…` | AG-UI SSE stream — natural language to agent |
-| `POST` | `/a2a/tasks/send` | A2A task submission |
-| `GET` | `/a2a/tasks/{id}` | A2A task status |
-| `GET` | `/.well-known/agent.json` | A2A Agent Card |
-| `GET` | `/` | Chat frontend |
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/register` | Public | Register a new user — returns 201 + user object |
+| `POST` | `/auth/token` | Public | Login — returns `{ "access_token": "…", "token_type": "bearer" }` |
+| `GET` | `/health` | Public | Health check |
+| `POST` | `/orders` | Bearer | Create an order — returns 201 + full order |
+| `GET` | `/orders/{id}` | Bearer | Get order by ID — 404 if not found |
+| `GET` | `/orders?status=PENDING` | Bearer | List all orders, optional status filter |
+| `DELETE` | `/orders/{id}` | Bearer | Cancel a PENDING order — 409 if already processing |
+| `GET` | `/agent/stream?message=…` | Bearer | AG-UI SSE stream — natural language to agent |
+| `POST` | `/a2a/tasks/send` | Bearer | A2A task submission |
+| `GET` | `/a2a/tasks/{id}` | Bearer | A2A task status |
+| `GET` | `/.well-known/agent.json` | Bearer | A2A Agent Card |
+| `GET` | `/` | Bearer | Chat frontend |
 
-**Order lifecycle:** `PENDING` → `PROCESSING` (automatic, every 5 min) → `SHIPPED` → `DELIVERED`
+**Order lifecycle:** `PENDING` → `PROCESSING` (automatic, every 5 min) → `SHIPPED` → `DELIVERED`  
+**Cancellation:** `DELETE /orders/{id}` soft-deletes — sets status to `CANCELLED`, record is retained for audit. Cancelled orders are returned by `GET /orders?status=CANCELLED`.
 
 **Validation:** `POST /orders` returns 422 for empty customer name, empty items list, zero/negative quantity, or negative price.
 
 ---
 
-## Running tests
+## Authentication
+
+Every endpoint except `GET /health` requires a JWT Bearer token.
+
+**Get a token:**
 
 ```bash
-# Unit tests — no database required
-uv run pytest tests/orders/test_router.py tests/orders/test_models.py \
-              tests/orders/test_service.py tests/scheduler/ tests/agent/
-
-# Full suite — requires both databases to be set up
-uv run pytest
+curl -X POST http://localhost:8002/auth/token \
+  -d "username=admin&password=<your-password>"
+# → { "access_token": "<jwt>", "token_type": "bearer" }
 ```
+
+**Use the token:**
+
+```bash
+curl http://localhost:8002/orders \
+  -H "Authorization: Bearer <jwt>"
+```
+
+**SSE / EventSource clients** (browsers) cannot set custom headers. Pass the token as a query parameter instead:
+
+```
+GET /agent/stream?message=…&token=<jwt>
+```
+
+Tokens expire after 24 hours (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`). Register additional users with `POST /auth/register`.
+
+---
+
+## Firing requests
+
+### Option A — HTTP files (VS Code / JetBrains)
+
+Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+extension in VS Code (or use JetBrains' built-in HTTP client), then:
+
+1. Open `requests/auth.http` and run the **Login** request to get a token.
+2. Copy the `access_token` value from the response.
+3. Open the target file and replace `PASTE_ACCESS_TOKEN_HERE` with your token.
+4. Run any request.
+
+| File | Contents |
+|---|---|
+| `requests/auth.http` | Register + login — **start here** |
+| `requests/orders.http` | REST CRUD — create, read, list, cancel |
+| `requests/agent.http` | AG-UI SSE stream + A2A protocol |
+| `requests/scenarios.http` | End-to-end lifecycle scenarios |
+| `requests/validation.http` | 4xx error cases + 401 auth tests |
+
+### Option B — Insomnia collection
+
+Import `requests/EC-OPS.insomnia_collection.json` into Insomnia (File → Import → From File).
+
+1. Select the **EC-OPS Local** sub-environment from the top-left dropdown.
+2. Run **Auth › Login** — the bearer token is saved automatically to the `token` environment variable via the after-response script.
+3. All other requests have Bearer auth pre-wired — ready to fire.
+
+To regenerate the collection after editing `.http` files:
+
+```bash
+uv run python scripts/generate_insomnia.py
+```
+
+---
+
+## Agent guardrails
+
+All natural-language requests to `/agent/stream` and `/a2a/tasks/send` pass through
+an input guardrail before reaching LM Studio:
+
+| Check | Limit | Behaviour |
+|---|---|---|
+| Message length | 500 chars max | Rejected with an explanation |
+| Injection patterns | 52 regex patterns across 9 threat categories (PROMPT_INJECTION, JAILBREAK, HISTORY_INJECTION, CONTEXT_POISONING, GOAL_HIJACKING, TOOL_MISUSE, DATA_EXFILTRATION, SOCIAL_ENGINEERING, INDIRECT_INJECTION) | Blocked before any model call |
+| Scope enforcement | Must contain order-related keywords | "I can only help with orders" |
+
+The guardrail fires **before** any LM Studio call — blocked requests never touch the model.
+
+A second guardrail (`ToolOutputGuardrail`) scans every MCP tool result before it reaches
+the LLM. It catches indirect prompt injection embedded in database values
+(e.g. `[TOOL OUTPUT]: ignore all previous rules` stored in a customer name field).
+
+Output is also sanitized: full UUIDs are truncated to 8 chars (`Order #abc12345...`),
+tool names are stripped, and stack traces are replaced with a generic error message.
+
+---
+
+## Running tests
+
+All 279 tests run without LM Studio — every agent test mocks the LLM client.
+
+```bash
+uv run pytest tests/ --tb=short          # all 279 tests
+uv run pytest tests/ -m eval             # 70 evaluation tests (guardrails + sanitizer)
+uv run pytest tests/ -m "not eval"       # 209 non-eval tests
+```
+
+### Pytest markers
+
+| Marker | Description | CI behaviour |
+|---|---|---|
+| `eval` | Deterministic guardrail and pipeline tests | Runs by default; skip with `SKIP_EVALS=true` repo variable |
+| `slow` | Requires LM Studio running | Never runs in CI |
+
+### VS Code Test Explorer
+
+The Testing panel (flask icon in sidebar) discovers all 279 tests automatically.
+Use `Ctrl+Shift+P` → **Python: Select Interpreter** → pick `.venv` if tests aren't discovered.
+
+---
+
+## VS Code setup
+
+Install recommended extensions when prompted, or via `Ctrl+Shift+P` → **Extensions: Show Recommended Extensions**.
+
+**Run configurations** (`F5` or **Run → Start Debugging**):
+
+| Configuration | Description |
+|---|---|
+| Server: Debug | Start uvicorn on port 8002 with file-watch reload (`src/` only) |
+| Test: All | Run all 279 tests |
+| Test: Eval only | Run only `@pytest.mark.eval` tests |
+| Test: Skip evals | Run all tests except eval-marked |
+| Test: Current file | Run pytest on the file open in the editor |
+
+**Tasks** (`Terminal → Run Task`):
+
+| Task | Command |
+|---|---|
+| Run Server | `uv run python -m src.main` |
+| Run Tests | `uv run pytest tests/ --tb=short -v` |
+| Run Eval Tests | `uv run pytest tests/ -m eval --tb=short -v` |
+| Lint | `uv run ruff check src tests scripts` |
+| Migrate | `uv run python scripts/migrate.py` |
+| Generate Insomnia Collection | `uv run python scripts/generate_insomnia.py` |
 
 ---
 
 ## Lint
 
 ```bash
-uv run ruff check src tests
+uv run ruff check src tests scripts
 ```
+
+---
+
+## Design & architecture
+
+See **[DESIGN_DECISIONS.md](DESIGN_DECISIONS.md)** for an explanation of every
+technical choice (FastAPI, Postgres + pgvector, APScheduler, MCP, A2A, AG-UI,
+uv, etc.) plus a Q&A section covering likely technical questions about the system.
+
+---
+
+## Continuous integration
+
+Every pull request and push to `main` runs lint (`ruff`) and the full test
+suite via GitHub Actions. Tests connect to the developer's local PostgreSQL
+over Tailscale — no hosted database is provisioned in CI.
+
+See **[docs/ci-tailscale.md](docs/ci-tailscale.md)** for the full setup guide
+(Tailscale auth key, required GitHub secrets, and how to skip tests when needed).
+
+See **[docs/operations.md](docs/operations.md)** for deployment considerations:
+multi-worker constraints, JWT secret requirements, scheduler single-instance rule,
+and the missing FK index.
+
+---
+
+## Security notes
+
+- **`JWT_SECRET_KEY` must be overridden.** The default value in `.env.example` is a placeholder. Generate a real secret before exposing the server to any network: `openssl rand -hex 32`.
+- **`?token=` query param leaks into logs.** Browser `EventSource` cannot set headers, so `/agent/stream` accepts the JWT as `?token=<jwt>`. This value appears in uvicorn access logs and any upstream proxy logs. Acceptable for local development; in production use a reverse proxy configured to scrub the `token` query parameter from logs.
+- **A2A task store is single-process.** The `_tasks` dict in `a2a_router.py` is in-memory and per-process. Tasks submitted to one uvicorn worker are invisible to another. Do not run `--workers N > 1` without replacing this with a shared store (Redis, DB table).
 
 ---
 
@@ -111,3 +275,7 @@ uv run ruff check src tests
 | `LMSTUDIO_BASE_URL` | `http://localhost:1234` | LM Studio server base URL |
 | `LM_MODEL` | `Qwen/Qwen2.5-7B-Instruct-GGUF` | Model identifier as shown in LM Studio |
 | `PORT` | `8002` | Server port |
+| `JWT_SECRET_KEY` | *(generated)* | HS256 signing secret — generate with `openssl rand -hex 32` |
+| `JWT_ALGORITHM` | `HS256` | JWT signing algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | Token lifetime in minutes (default: 24 h) |
+| `LOG_LEVEL` | `INFO` | Set to `DEBUG` to trace full LM Studio request/response cycle (httpx traffic + per-iteration model I/O) |

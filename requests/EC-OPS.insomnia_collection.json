@@ -1,0 +1,1497 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-06-21T12:25:50.000Z",
+  "__export_source": "ec-ops-generator",
+  "resources": [
+    {
+      "_id": "wrk_c463b48d187d4d60",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "EC-OPS",
+      "description": "E-Commerce Order Processing System.\n\nGetting started:\n1. Select the 'EC-OPS Local' sub-environment.\n2. Run Auth \u203a Login \u2014 baseUrl defaults to http://localhost:8002.\n3. The {{ token }} variable is saved automatically."
+    },
+    {
+      "_id": "env_63ec364fae964e2a",
+      "_type": "environment",
+      "parentId": "wrk_c463b48d187d4d60",
+      "name": "Base Environment",
+      "data": {}
+    },
+    {
+      "_id": "env_28802b16045f4a5c",
+      "_type": "environment",
+      "parentId": "env_63ec364fae964e2a",
+      "name": "EC-OPS Local",
+      "data": {
+        "baseUrl": "http://localhost:8002",
+        "token": ""
+      }
+    },
+    {
+      "_id": "fld_f6e58c4504b54167",
+      "_type": "request_group",
+      "parentId": "wrk_c463b48d187d4d60",
+      "name": "Agent"
+    },
+    {
+      "_id": "req_28706a7c099e473e",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Create an order via natural language",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Create%20an%20order%20for%20David%20with%202%20notebooks%20at%20%248.50%20each%20and%201%20pen%20at%20%241.25",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_72e54f2babf44ee4",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "List all current orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=List%20all%20orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_e58c132becce48ea",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "List only pending orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Show%20me%20all%20pending%20orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_2c16649cc0b8412b",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Get a specific order by ID \u2014 paste real ID",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Get%20order%20REPLACE_WITH_ORDER_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_5d150ca902704449",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Cancel an order by ID",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Cancel%20order%20REPLACE_WITH_ORDER_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_cd158e1c9a9c4ec8",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Complex \u2014 create then describe",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Create%20an%20order%20for%20Emma%20with%203%20items%3A%20a%20laptop%20stand%20for%20%2445%2C%20a%20webcam%20for%20%2279.99%2C%20and%20an%20LED%20desk%20lamp%20for%20%2332.50",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2500\u2500 A2A Agent Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_101396a592d64e58",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Discover agent capabilities",
+      "method": "GET",
+      "url": "{{ baseUrl }}/.well-known/agent.json",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2500\u2500 A2A Task submission \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_9fead36154cf42be",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Submit a task \u2014 returns 202 immediately with a task ID",
+      "method": "POST",
+      "url": "{{ baseUrl }}/a2a/tasks/send",
+      "headers": [
+        {
+          "id": "hdr_9f33a78c074e4aff",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Create an order for Frank with 1 standing desk at $349.00\"\n}"
+      }
+    },
+    {
+      "_id": "req_d4d4ab42890e4596",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Poll task status \u2014 paste task ID from response above",
+      "method": "GET",
+      "url": "{{ baseUrl }}/a2a/tasks/REPLACE_WITH_TASK_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_5e15ef6297ee4245",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Poll \u2014 list orders via A2A",
+      "method": "POST",
+      "url": "{{ baseUrl }}/a2a/tasks/send",
+      "headers": [
+        {
+          "id": "hdr_c10ffa9191bd4c1f",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"List all orders with status PENDING\"\n}"
+      }
+    },
+    {
+      "_id": "req_0df524f725074d0e",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Get non-existent task \u2192 404",
+      "method": "GET",
+      "url": "{{ baseUrl }}/a2a/tasks/00000000-0000-0000-0000-000000000000",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "fld_10f6ab58ded240b1",
+      "_type": "request_group",
+      "parentId": "wrk_c463b48d187d4d60",
+      "name": "Auth"
+    },
+    {
+      "_id": "req_082aa93ce93e43ae",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Register a new user \u2014 returns 201 with user object",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/register",
+      "headers": [
+        {
+          "id": "hdr_1ae9bb50b2c54faf",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\",\n  \"password\": \"Password1!\",\n  \"email\": \"admin@example.com\"\n}"
+      }
+    },
+    {
+      "_id": "req_ae69823544b74cde",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Register \u2014 duplicate username \u2192 409",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/register",
+      "headers": [
+        {
+          "id": "hdr_b71913b491134677",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\",\n  \"password\": \"AnotherPass1!\"\n}"
+      }
+    },
+    {
+      "_id": "req_650a2f69db2c4045",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Register \u2014 password too short \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/register",
+      "headers": [
+        {
+          "id": "hdr_42b49a06649d4287",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"baduser\",\n  \"password\": \"short\"\n}\n\n\n# \u2500\u2500 Login (get JWT) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_22da62a99eb640ba",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Login \u2014 returns { \"access_token\": \"...\", \"token_type\": \"bearer\" }",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/token",
+      "headers": [
+        {
+          "id": "hdr_9dfd89f7c77747d4",
+          "name": "Content-Type",
+          "value": "application/x-www-form-urlencoded"
+        }
+      ],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "id": "par_2bae7117c4324b2c",
+            "name": "username",
+            "value": "admin"
+          },
+          {
+            "id": "par_55dc6f6e871c42ec",
+            "name": "password",
+            "value": "Password1!"
+          }
+        ]
+      },
+      "afterResponseScript": "const data = await response.json();\nif (data && data.access_token) {\n    await insomnia.environment.set('token', data.access_token);\n    console.log('EC-OPS: token saved');\n}"
+    },
+    {
+      "_id": "req_d694cc23142e4a81",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Login \u2014 wrong password \u2192 401",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/token",
+      "headers": [
+        {
+          "id": "hdr_fe154520e7f44d53",
+          "name": "Content-Type",
+          "value": "application/x-www-form-urlencoded"
+        }
+      ],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "id": "par_939ed61c193d42a9",
+            "name": "username",
+            "value": "admin"
+          },
+          {
+            "id": "par_2d125c6376a84741",
+            "name": "password",
+            "value": "wrongpassword\n\n\n# \u2500\u2500 Test token \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n# Copy the access_token value from the login response above,\n# paste it below, then run any request in orders.http / agent.http.\n\n@token = PASTE_ACCESS_TOKEN_HERE"
+          }
+        ]
+      },
+      "afterResponseScript": "const data = await response.json();\nif (data && data.access_token) {\n    await insomnia.environment.set('token', data.access_token);\n    console.log('EC-OPS: token saved');\n}"
+    },
+    {
+      "_id": "req_7949afc751044f66",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Verify token works \u2014 list orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_eac06907fefa41e5",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "No token \u2192 401",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_925cacff1c4c41a9",
+      "_type": "request",
+      "parentId": "fld_10f6ab58ded240b1",
+      "name": "Bad token \u2192 401",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "fld_4254b062098648fc",
+      "_type": "request_group",
+      "parentId": "wrk_c463b48d187d4d60",
+      "name": "Orders"
+    },
+    {
+      "_id": "req_9f0bc6091ef84bc4",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Health check \u2014 no auth required",
+      "method": "GET",
+      "url": "{{ baseUrl }}/health",
+      "headers": [],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2500\u2500 Create \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_01db091bb10d4783",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Create order \u2014 single item",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_291922a161ae47c2",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": [\n    { \"product_name\": \"Wireless Mouse\", \"quantity\": 1, \"price\": \"29.99\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_63d68b3e0e1f4e50",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Create order \u2014 multiple items",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_3e0ffff6c10b47e1",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Bob\",\n  \"items\": [\n    { \"product_name\": \"Mechanical Keyboard\", \"quantity\": 1, \"price\": \"89.99\" },\n    { \"product_name\": \"USB-C Hub\",           \"quantity\": 2, \"price\": \"34.50\" },\n    { \"product_name\": \"Monitor Stand\",       \"quantity\": 1, \"price\": \"45.00\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_4a6b17992d65412c",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Create order \u2014 high quantity, decimal price",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_d6382277f05a4186",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Carol\",\n  \"items\": [\n    { \"product_name\": \"AAA Batteries (pack)\", \"quantity\": 10, \"price\": \"4.99\" },\n    { \"product_name\": \"AA Batteries (pack)\",  \"quantity\": 5,  \"price\": \"5.49\" }\n  ]\n}\n\n\n# \u2500\u2500 Read \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_b4fb7aa950514719",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Get order by ID \u2014 paste an id from a create response above",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ORDER_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_975119cb5dcd46fb",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "List all orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_504ce08d6d074734",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "List PENDING orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PENDING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_e91c0c19d2b64584",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "List PROCESSING orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PROCESSING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_aa04bfa40020494f",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "List SHIPPED orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=SHIPPED",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_5d259921e0f045f3",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "List DELIVERED orders",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=DELIVERED",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_ccb96ba79b6241ce",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "List CANCELLED orders (soft-deleted)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=CANCELLED",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2500\u2500 Cancel (soft-delete) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_d4f4613b89314632",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Cancel a PENDING order \u2014 paste a PENDING order id",
+      "method": "DELETE",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_PENDING_ORDER_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_632dd36fc1804860",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Verify the cancelled order is retained with status CANCELLED",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_PENDING_ORDER_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "fld_41946a791c804613",
+      "_type": "request_group",
+      "parentId": "wrk_c463b48d187d4d60",
+      "name": "Scenarios"
+    },
+    {
+      "_id": "req_510bb7b5c2bc4993",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.1 \u2014 Create order",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_cf8905bb661645a6",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Lifecycle Test\",\n  \"items\": [\n    { \"product_name\": \"Test Item\", \"quantity\": 1, \"price\": \"10.00\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_5bb2b81008fe426a",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.2 \u2014 Verify it is PENDING",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ID_FROM_1_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_0e0250c886224f54",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.3 \u2014 Confirm it appears in PENDING list",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PENDING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_fbb1a60a376443ee",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.4 \u2014 Cancel it (soft-delete \u2014 sets status to CANCELLED)",
+      "method": "DELETE",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ID_FROM_1_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_f745c71a15b84621",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.5 \u2014 Verify it is retained with status CANCELLED (200, not 404)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ID_FROM_1_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_1849451ec58e4377",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.6 \u2014 Confirm it no longer appears in PENDING list",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PENDING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_dd0c97abbd0f4039",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 1.7 \u2014 Confirm it appears in CANCELLED list",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=CANCELLED",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n# SCENARIO 2: Bulk creation + status filtering\n# Create several orders, filter by status, verify counts\n# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      }
+    },
+    {
+      "_id": "req_21f239e4c54845a4",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 2.1 \u2014 Create order A",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_da8b16ae41d44812",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Bulk Customer A\",\n  \"items\": [{ \"product_name\": \"Item A1\", \"quantity\": 2, \"price\": \"15.00\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_77be49bcc0144ef7",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 2.2 \u2014 Create order B",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_67b063f4ddaa47fc",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Bulk Customer B\",\n  \"items\": [\n    { \"product_name\": \"Item B1\", \"quantity\": 1, \"price\": \"25.00\" },\n    { \"product_name\": \"Item B2\", \"quantity\": 3, \"price\": \"8.50\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_3d6908584e0149c5",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 2.3 \u2014 Create order C",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_06448c1cafaa4e60",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Bulk Customer C\",\n  \"items\": [{ \"product_name\": \"Item C1\", \"quantity\": 5, \"price\": \"3.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_e466dcc839df441b",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 2.4 \u2014 List all orders (should include A, B, C as PENDING)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_03da2fa01c2b4318",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 2.5 \u2014 List only PENDING",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PENDING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n# SCENARIO 3: Cancel race \u2014 try to cancel a PROCESSING order\n# Create an order, wait for scheduler to promote it (5 min),\n# then attempt cancel \u2192 expect 409\n# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      }
+    },
+    {
+      "_id": "req_1d014c83ff7e437d",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 3.1 \u2014 Create order to be promoted",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_cc2118bbb02e4da8",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Processing Race\",\n  \"items\": [{ \"product_name\": \"Race Item\", \"quantity\": 1, \"price\": \"99.00\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_ea58d19c282049f4",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 3.2 \u2014 After 5 min, verify it is now PROCESSING",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ID_FROM_3_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_4cbeee5d3bc04b99",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 3.3 \u2014 Attempt to cancel a PROCESSING order \u2192 expect 409",
+      "method": "DELETE",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ID_FROM_3_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n# SCENARIO 4: Agent creates order, REST API reads it\n# Natural language \u2192 agent \u2192 SSE \u2192 verify via REST\n# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      }
+    },
+    {
+      "_id": "req_d3500301946446e9",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 4.1 \u2014 Ask agent to create order",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Create%20an%20order%20for%20Grace%20with%202%20yoga%20mats%20at%20%2422.00%20each%20and%201%20water%20bottle%20at%20%2412.50",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_2e999252cb9c4c64",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 4.2 \u2014 Confirm via REST \u2014 should appear in PENDING list",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PENDING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_0bf24e8158814494",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 4.3 \u2014 Get the order Grace placed (copy id from PENDING list)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ID_FROM_4_2",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n# SCENARIO 5: A2A fire-and-forget with polling\n# Submit \u2192 poll until completed \u2192 read result\n# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      }
+    },
+    {
+      "_id": "req_55eb4f473f1a48f8",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 5.1 \u2014 Submit task (returns 202 immediately)",
+      "method": "POST",
+      "url": "{{ baseUrl }}/a2a/tasks/send",
+      "headers": [
+        {
+          "id": "hdr_3bc86553c70a40b7",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"message\": \"Create an order for Henry with 1 ergonomic chair at $350.00 and list all pending orders\"\n}"
+      }
+    },
+    {
+      "_id": "req_17417ec86e4642fa",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 5.2 \u2014 Poll immediately (likely still pending)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/a2a/tasks/REPLACE_WITH_TASK_ID_FROM_5_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_d72914b0b1594361",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 5.3 \u2014 Poll again after a few seconds (should be completed)",
+      "method": "GET",
+      "url": "{{ baseUrl }}/a2a/tasks/REPLACE_WITH_TASK_ID_FROM_5_1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_ca3a11d1df234333",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 5.4 \u2014 Verify the order was created via REST",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders?status=PENDING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n# SCENARIO 6: Multi-item order price edge cases\n# Zero-price item (free gift), max quantity, high-value order\n# \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      }
+    },
+    {
+      "_id": "req_7a378c4872314854",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 6.1 \u2014 Order with a free item (price = 0.00, allowed by ge=0)",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_04d10b551ae746b9",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Promo Customer\",\n  \"items\": [\n    { \"product_name\": \"Premium Headphones\", \"quantity\": 1, \"price\": \"199.99\" },\n    { \"product_name\": \"Free Carry Case\",    \"quantity\": 1, \"price\": \"0.00\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_63de978f50554bc7",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 6.2 \u2014 High-value order",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_2dd22068dc4e4e80",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Enterprise Buyer\",\n  \"items\": [\n    { \"product_name\": \"Server Rack\",       \"quantity\": 2,  \"price\": \"1299.99\" },\n    { \"product_name\": \"Network Switch\",    \"quantity\": 4,  \"price\": \"459.00\" },\n    { \"product_name\": \"UPS Battery\",       \"quantity\": 2,  \"price\": \"349.50\" },\n    { \"product_name\": \"Patch Panel\",       \"quantity\": 10, \"price\": \"89.99\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_5919d729e08242b2",
+      "_type": "request",
+      "parentId": "fld_41946a791c804613",
+      "name": "Step 6.3 \u2014 Large quantity, low unit price",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_5442ed3a1324480a",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Stationery Bulk\",\n  \"items\": [\n    { \"product_name\": \"Ballpoint Pen\",  \"quantity\": 100, \"price\": \"0.49\" },\n    { \"product_name\": \"Sticky Notes\",  \"quantity\": 50,  \"price\": \"1.99\" },\n    { \"product_name\": \"Paper Clip Box\", \"quantity\": 20,  \"price\": \"2.49\" }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "fld_92df9dba96594709",
+      "_type": "request_group",
+      "parentId": "wrk_c463b48d187d4d60",
+      "name": "Validation"
+    },
+    {
+      "_id": "req_513d2dc5b6fd474a",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Empty customer_name \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_f07972834d5c40eb",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"\",\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": 1, \"price\": \"9.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_d671659b6c7d454d",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Whitespace-only customer_name \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_e126858335504669",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"   \",\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": 1, \"price\": \"9.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_153788ee0493460d",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Empty items array \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_ea0f774d5d89479e",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": []\n}"
+      }
+    },
+    {
+      "_id": "req_fe75e56914514f03",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Empty product_name \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_a81255fb387543dd",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": [{ \"product_name\": \"\", \"quantity\": 1, \"price\": \"9.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_a165eeaeaf93455d",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Zero quantity \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_09868d0539434341",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": 0, \"price\": \"9.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_cc87494a29d24cf8",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Negative quantity \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_6180510beb0d4ba5",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": -5, \"price\": \"9.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_1e344da881db4edd",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Negative price \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_b7d2149a1eaa4606",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": 1, \"price\": \"-1.00\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_095e9f6f00ec4e02",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Missing required field (no customer_name) \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_67709aff05eb4081",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": 1, \"price\": \"9.99\" }]\n}"
+      }
+    },
+    {
+      "_id": "req_59f84fa7a2c3405f",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Missing required field (no items) \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_40544e6d4a4148fe",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\"\n}"
+      }
+    },
+    {
+      "_id": "req_e1101e44cb66439e",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Wrong type \u2014 quantity as string \u2192 422",
+      "method": "POST",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [
+        {
+          "id": "hdr_c30e633446bf49f4",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"customer_name\": \"Alice\",\n  \"items\": [{ \"product_name\": \"Widget\", \"quantity\": \"one\", \"price\": \"9.99\" }]\n}\n\n\n# \u2500\u2500 404 Not found \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_98197868c9424406",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Get non-existent order \u2192 404",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/00000000-0000-0000-0000-000000000000",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_8403ec8b86704101",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Delete non-existent order \u2192 404",
+      "method": "DELETE",
+      "url": "{{ baseUrl }}/orders/00000000-0000-0000-0000-000000000000",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_b9a5dfe206fd4794",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Invalid UUID format \u2192 422",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders/not-a-uuid",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2500\u2500 409 Conflict \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_0a326bc3146b4ea1",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "then paste that order ID here.",
+      "method": "DELETE",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_PROCESSING_ORDER_ID",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "# \u2500\u2500 401 Unauthorized (auth tests) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+      }
+    },
+    {
+      "_id": "req_67a8929993014a12",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "No token \u2192 401",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_ba7e2dbc17414725",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Invalid token \u2192 401",
+      "method": "GET",
+      "url": "{{ baseUrl }}/orders",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_96c450d9d6574c3b",
+      "_type": "request",
+      "parentId": "fld_92df9dba96594709",
+      "name": "Wrong username at login \u2192 401",
+      "method": "POST",
+      "url": "{{ baseUrl }}/auth/token",
+      "headers": [
+        {
+          "id": "hdr_fece4b289114449c",
+          "name": "Content-Type",
+          "value": "application/x-www-form-urlencoded"
+        }
+      ],
+      "authentication": {
+        "type": "none"
+      },
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "id": "par_5a1f20c2a2fd4293",
+            "name": "username",
+            "value": "doesnotexist"
+          },
+          {
+            "id": "par_1d8da3c266e54bc5",
+            "name": "password",
+            "value": "anypassword"
+          }
+        ]
+      },
+      "afterResponseScript": "const data = await response.json();\nif (data && data.access_token) {\n    await insomnia.environment.set('token', data.access_token);\n    console.log('EC-OPS: token saved');\n}"
+    }
+  ]
+}

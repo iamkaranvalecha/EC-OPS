@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# RUN_TESTS repository/environment variable (default: true).
+# Set to "false" in Settings → Variables → Actions to skip the test job
+# while still running lint. The lint job always runs.
+#
+# SKIP_EVALS repository/environment variable (default: false).
+# Set to "true" to run only non-eval tests (pytest -m "not eval").
+# Evals are deterministic and do not require LM Studio, so they normally run in CI.
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff check
+        run: uv run ruff check src tests scripts
+
+  test:
+    name: Test (via Tailscale → local Postgres)
+    runs-on: ubuntu-latest
+    # Skip this job when RUN_TESTS is explicitly set to "false".
+    # vars.RUN_TESTS is empty string when the variable is not set, which
+    # evaluates as truthy here — tests run by default.
+    if: vars.RUN_TESTS != 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tags: tag:ci
+
+      - name: Wait for local Postgres to be reachable over Tailscale
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+        run: |
+          # Extract host and port from DB_URL
+          # Expected format: postgresql+asyncpg://user:pass@host:port/db
+          HOST=$(echo "$DB_URL" | sed 's|.*@||' | sed 's|/.*||' | cut -d: -f1)
+          PORT=$(echo "$DB_URL" | sed 's|.*@||' | sed 's|/.*||' | cut -d: -f2)
+          PORT=${PORT:-5432}
+
+          echo "Waiting for Postgres at $HOST:$PORT ..."
+          for i in $(seq 1 30); do
+            if nc -z "$HOST" "$PORT" 2>/dev/null; then
+              echo "Postgres reachable after $i attempts."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Postgres at $HOST:$PORT not reachable after 60 seconds."
+          exit 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run tests
+        env:
+          DATABASE_URL: ${{ secrets.DB_URL }}
+          TEST_DATABASE_URL: ${{ secrets.TEST_DB_URL }}
+          SKIP_EVALS: ${{ vars.SKIP_EVALS || 'false' }}
+        run: |
+          if [ "$SKIP_EVALS" = "true" ]; then
+            uv run pytest --tb=short -m "not eval"
+          else
+            uv run pytest --tb=short
+          fi

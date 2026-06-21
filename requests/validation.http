@@ -1,8 +1,12 @@
 ### EC-OPS — Validation & Error Scenarios
 ### Every request below should return 4xx — confirms the API boundary holds
 ### Requires VS Code REST Client extension (humao.rest-client)
+###
+### Authentication: get a token from auth.http first, then paste it below.
+### The 401 tests at the bottom intentionally omit the token.
 
 @baseUrl = http://localhost:8002
+@token = PASTE_ACCESS_TOKEN_HERE
 
 
 # ── 422 Input validation ──────────────────────────────────────────────────────
@@ -10,6 +14,7 @@
 ### Empty customer_name → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "",
@@ -21,6 +26,7 @@ Content-Type: application/json
 ### Whitespace-only customer_name → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "   ",
@@ -32,6 +38,7 @@ Content-Type: application/json
 ### Empty items array → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -43,6 +50,7 @@ Content-Type: application/json
 ### Empty product_name → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -54,6 +62,7 @@ Content-Type: application/json
 ### Zero quantity → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -65,6 +74,7 @@ Content-Type: application/json
 ### Negative quantity → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -76,6 +86,7 @@ Content-Type: application/json
 ### Negative price → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -87,6 +98,7 @@ Content-Type: application/json
 ### Missing required field (no customer_name) → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "items": [{ "product_name": "Widget", "quantity": 1, "price": "9.99" }]
@@ -97,6 +109,7 @@ Content-Type: application/json
 ### Missing required field (no items) → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice"
@@ -107,6 +120,7 @@ Content-Type: application/json
 ### Wrong type — quantity as string → 422
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -118,16 +132,19 @@ Content-Type: application/json
 
 ### Get non-existent order → 404
 GET {{baseUrl}}/orders/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
 
 ###
 
 ### Delete non-existent order → 404
 DELETE {{baseUrl}}/orders/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
 
 ###
 
 ### Invalid UUID format → 422
 GET {{baseUrl}}/orders/not-a-uuid
+Authorization: Bearer {{token}}
 
 
 # ── 409 Conflict ──────────────────────────────────────────────────────────────
@@ -138,3 +155,24 @@ GET {{baseUrl}}/orders/not-a-uuid
 @processingOrderId = REPLACE_WITH_PROCESSING_ORDER_ID
 
 DELETE {{baseUrl}}/orders/{{processingOrderId}}
+Authorization: Bearer {{token}}
+
+
+# ── 401 Unauthorized (auth tests) ─────────────────────────────────────────────
+
+### No token → 401
+GET {{baseUrl}}/orders
+
+###
+
+### Invalid token → 401
+GET {{baseUrl}}/orders
+Authorization: Bearer not.a.real.token
+
+###
+
+### Wrong username at login → 401
+POST {{baseUrl}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username=doesnotexist&password=anypassword

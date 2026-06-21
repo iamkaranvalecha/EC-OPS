@@ -1,12 +1,16 @@
 ### EC-OPS — Orders API
 ### Happy-path CRUD scenarios
 ### Requires VS Code REST Client extension (humao.rest-client)
+###
+### Authentication: get a token from auth.http first, then paste it below.
 
 @baseUrl = http://localhost:8002
+@token = PASTE_ACCESS_TOKEN_HERE
 
-# ── Health ────────────────────────────────────────────────────────────────────
 
-### Health check
+# ── Health (public) ───────────────────────────────────────────────────────────
+
+### Health check — no auth required
 GET {{baseUrl}}/health
 
 
@@ -16,6 +20,7 @@ GET {{baseUrl}}/health
 # @name order1
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Alice",
@@ -30,6 +35,7 @@ Content-Type: application/json
 # @name order2
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Bob",
@@ -46,6 +52,7 @@ Content-Type: application/json
 # @name order3
 POST {{baseUrl}}/orders
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "customer_name": "Carol",
@@ -62,41 +69,55 @@ Content-Type: application/json
 @orderId = REPLACE_WITH_ORDER_ID
 
 GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
 
 ###
 
 ### List all orders
 GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
 
 ###
 
 ### List PENDING orders
 GET {{baseUrl}}/orders?status=PENDING
+Authorization: Bearer {{token}}
 
 ###
 
 ### List PROCESSING orders
 GET {{baseUrl}}/orders?status=PROCESSING
+Authorization: Bearer {{token}}
 
 ###
 
 ### List SHIPPED orders
 GET {{baseUrl}}/orders?status=SHIPPED
+Authorization: Bearer {{token}}
 
 ###
 
 ### List DELIVERED orders
 GET {{baseUrl}}/orders?status=DELIVERED
+Authorization: Bearer {{token}}
+
+###
+
+### List CANCELLED orders (soft-deleted)
+GET {{baseUrl}}/orders?status=CANCELLED
+Authorization: Bearer {{token}}
 
 
-# ── Cancel ────────────────────────────────────────────────────────────────────
+# ── Cancel (soft-delete) ──────────────────────────────────────────────────────
 
 ### Cancel a PENDING order — paste a PENDING order id
 @pendingOrderId = REPLACE_WITH_PENDING_ORDER_ID
 
 DELETE {{baseUrl}}/orders/{{pendingOrderId}}
+Authorization: Bearer {{token}}
 
 ###
 
-### Verify the cancelled order is gone (404)
+### Verify the cancelled order is retained with status CANCELLED
 GET {{baseUrl}}/orders/{{pendingOrderId}}
+Authorization: Bearer {{token}}

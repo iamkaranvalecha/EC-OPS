@@ -12,7 +12,10 @@ def test_order_status_members():
     assert OrderStatus.PROCESSING == "PROCESSING"
     assert OrderStatus.SHIPPED == "SHIPPED"
     assert OrderStatus.DELIVERED == "DELIVERED"
-    assert set(s.value for s in OrderStatus) == {"PENDING", "PROCESSING", "SHIPPED", "DELIVERED"}
+    assert OrderStatus.CANCELLED == "CANCELLED"
+    assert set(s.value for s in OrderStatus) == {
+        "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"
+    }
 
 
 def test_order_table_name():
@@ -88,22 +91,24 @@ def test_order_item_relationship_attribute_exists():
 
 
 @pytest.mark.skipif(
-    not os.environ.get("DATABASE_URL"),
-    reason="requires live DB - set DATABASE_URL to run",
+    not os.environ.get("TEST_DATABASE_URL"),
+    reason="requires live test DB — set TEST_DATABASE_URL to run",
 )
 async def test_insert_order_with_items_db():
     import os
 
+    from dotenv import dotenv_values
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from src.core.database import Base
-
-    url = os.environ["DATABASE_URL"]
+    _env = dotenv_values(".env")
+    # Always use the TEST database — never touch the application DB
+    url = (
+        os.environ.get("TEST_DATABASE_URL")
+        or _env.get("TEST_DATABASE_URL")
+        or "postgresql+asyncpg://postgres:postgres@localhost:5432/ecops_test"
+    )
     eng = create_async_engine(url, echo=False)
     session_factory = async_sessionmaker(eng, expire_on_commit=False)
-
-    async with eng.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
     try:
         async with session_factory() as session:
@@ -125,6 +130,6 @@ async def test_insert_order_with_items_db():
             product_names = {i.product_name for i in fetched.items}
             assert product_names == {"Widget A", "Widget B"}
     finally:
-        async with eng.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
+        # Do NOT drop_all — tables are shared with the test suite.
+        # Row cleanup is handled by the autouse db_setup fixture (TRUNCATE orders CASCADE).
         await eng.dispose()
