@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 from httpx import ASGITransport, AsyncClient
 
 from src.main import app
@@ -139,7 +138,6 @@ class TestA2AGuardrailBlocking:
     async def test_oos_a2a_task_completes_with_blocked_result(self):
         """An OOS message sent via A2A must complete (not fail) with the guardrail reply."""
         import asyncio
-        from unittest.mock import patch
 
         # run_executor has the guardrail built in — no LLM mock needed
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

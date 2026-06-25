@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.orders.models import Order, OrderStatus
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 _SIMPLE_ORDER = {

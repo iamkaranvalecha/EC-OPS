@@ -13,7 +13,7 @@ pytestmark = pytest.mark.eval
 from unittest.mock import AsyncMock, MagicMock
 
 from src.agent.executor import run_executor
-from src.agent.guardrails import InputGuardrail, OutputSanitizer, _TOOL_NAMES, _UUID_RE
+from src.agent.guardrails import _TOOL_NAMES, _UUID_RE, InputGuardrail, OutputSanitizer
 
 _guardrail = InputGuardrail()
 _sanitizer = OutputSanitizer()

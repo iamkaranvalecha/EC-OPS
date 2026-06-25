@@ -9,7 +9,6 @@ import pytest
 from dotenv import dotenv_values
 
 from src.agent.tools import build_mcp_server
-from src.orders.exceptions import OrderNotCancellable, OrderNotFound
 from src.orders.models import Order, OrderItem, OrderStatus
 
 _env = dotenv_values(".env")
@@ -151,7 +150,6 @@ async def test_cancel_order_tool_order_not_found_raises():
 @pytest.mark.asyncio
 async def test_cancel_order_tool_not_cancellable_raises():
     """cancel_order_tool raises when the order is not in PENDING status."""
-    import uuid
     order = _make_order(status=OrderStatus.PROCESSING)
     factory = _session_factory_returning(order)
     mcp = build_mcp_server(factory)

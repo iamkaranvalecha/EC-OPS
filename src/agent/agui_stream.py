@@ -10,8 +10,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sse_starlette.sse import EventSourceResponse
 
-logger = logging.getLogger(__name__)
-
 from src.agent.events import (
     RunFinished,
     RunStarted,
@@ -26,6 +24,8 @@ from src.auth.dependencies import get_current_user
 from src.auth.models import User
 from src.core.config import settings as _settings
 from src.core.database import async_session as _prod_session_factory
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["agui"])
 
@@ -230,7 +230,8 @@ async def stream_executor(
                         if isinstance(raw, tuple):
                             content_items, raw_meta = raw[0], raw[1]
                         else:
-                            content_items, raw_meta = (raw if isinstance(raw, list) else [raw]), None
+                            content_items = raw if isinstance(raw, list) else [raw]
+                            raw_meta = None
 
                         if content_items:
                             output = "\n".join(

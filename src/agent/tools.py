@@ -19,6 +19,7 @@ from src.orders.service import (
     list_orders,
 )
 
+
 def build_mcp_server(
     session_factory: async_sessionmaker[AsyncSession],
     user_id: UUID | None = None,

@@ -10,7 +10,13 @@ import pytest
 from src.orders.exceptions import OrderNotCancellable, OrderNotFound
 from src.orders.models import Order, OrderItem, OrderStatus
 from src.orders.schemas import OrderCreate, OrderItemCreate
-from src.orders.service import cancel_order, create_order, find_orders_by_product, get_order, list_orders
+from src.orders.service import (
+    cancel_order,
+    create_order,
+    find_orders_by_product,
+    get_order,
+    list_orders,
+)
 
 
 def _make_order(
