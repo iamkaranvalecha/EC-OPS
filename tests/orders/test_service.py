@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.orders.exceptions import OrderNotCancellable, OrderNotFound
+from src.orders.exceptions import OrderNotCancellable, OrderNotFound, OrderStatusTransitionError
 from src.orders.models import Order, OrderItem, OrderStatus
 from src.orders.schemas import OrderCreate, OrderItemCreate
-from src.orders.service import cancel_order, create_order, find_orders_by_product, get_order, list_orders
+from src.orders.service import cancel_order, create_order, find_orders_by_product, get_order, list_orders, update_order_status
 
 
 def _make_order(
@@ -171,6 +171,89 @@ async def test_cancel_order_not_found():
 
     with pytest.raises(OrderNotFound):
         await cancel_order(uuid.uuid4(), session)
+
+
+# ── update_order_status ───────────────────────────────────────────────────────
+
+
+def _session_returning(order: Order) -> AsyncMock:
+    session = _mock_session()
+    result_mock = MagicMock()
+    result_mock.scalar_one_or_none.return_value = order
+    session.execute = AsyncMock(return_value=result_mock)
+    return session
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_pending_to_processing():
+    order = _make_order(status=OrderStatus.PENDING)
+    session = _session_returning(order)
+
+    updated = await update_order_status(order.id, OrderStatus.PROCESSING, session)
+
+    assert updated.status == OrderStatus.PROCESSING
+    assert updated.updated_at is not None
+    session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_processing_to_shipped():
+    order = _make_order(status=OrderStatus.PROCESSING)
+    session = _session_returning(order)
+
+    updated = await update_order_status(order.id, OrderStatus.SHIPPED, session)
+
+    assert updated.status == OrderStatus.SHIPPED
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_shipped_to_delivered():
+    order = _make_order(status=OrderStatus.SHIPPED)
+    session = _session_returning(order)
+
+    updated = await update_order_status(order.id, OrderStatus.DELIVERED, session)
+
+    assert updated.status == OrderStatus.DELIVERED
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_invalid_transition_raises():
+    order = _make_order(status=OrderStatus.PENDING)
+    session = _session_returning(order)
+
+    with pytest.raises(OrderStatusTransitionError):
+        await update_order_status(order.id, OrderStatus.DELIVERED, session)
+
+    session.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_terminal_delivered_raises():
+    order = _make_order(status=OrderStatus.DELIVERED)
+    session = _session_returning(order)
+
+    with pytest.raises(OrderStatusTransitionError):
+        await update_order_status(order.id, OrderStatus.SHIPPED, session)
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_terminal_cancelled_raises():
+    order = _make_order(status=OrderStatus.CANCELLED)
+    session = _session_returning(order)
+
+    with pytest.raises(OrderStatusTransitionError):
+        await update_order_status(order.id, OrderStatus.PROCESSING, session)
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_not_found_raises():
+    session = _mock_session()
+    result_mock = MagicMock()
+    result_mock.scalar_one_or_none.return_value = None
+    session.execute = AsyncMock(return_value=result_mock)
+
+    with pytest.raises(OrderNotFound):
+        await update_order_status(uuid.uuid4(), OrderStatus.PROCESSING, session)
 
 
 # ── find_orders_by_product ────────────────────────────────────────────────────
