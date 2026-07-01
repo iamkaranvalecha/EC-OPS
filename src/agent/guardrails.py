@@ -41,6 +41,7 @@ class ThreatCategory(str, enum.Enum):
 _TOOL_NAMES: frozenset[str] = frozenset({
     "list_orders_tool", "create_order_tool", "get_order_tool",
     "cancel_order_tool", "find_orders_by_product_tool", "search_orders",
+    "update_order_status_tool",
 })
 
 _UUID_RE = re.compile(

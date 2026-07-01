@@ -108,6 +108,69 @@ GET {{baseUrl}}/orders?status=CANCELLED
 Authorization: Bearer {{token}}
 
 
+# ── Update status ─────────────────────────────────────────────────────────────
+# State machine: PENDING → PROCESSING → SHIPPED → DELIVERED (terminal)
+# DELIVERED and CANCELLED are terminal; use DELETE /orders/{id} to cancel a PENDING order.
+
+### Advance PENDING → PROCESSING
+# @name advance1
+@updateOrderId = REPLACE_WITH_ORDER_ID
+
+PATCH {{baseUrl}}/orders/{{updateOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "PROCESSING"
+}
+
+###
+
+### Advance PROCESSING → SHIPPED
+PATCH {{baseUrl}}/orders/{{updateOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "SHIPPED"
+}
+
+###
+
+### Advance SHIPPED → DELIVERED
+PATCH {{baseUrl}}/orders/{{updateOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "DELIVERED"
+}
+
+###
+
+### Invalid transition — PENDING → DELIVERED (skips steps) → expect 422
+@pendingSkipId = REPLACE_WITH_PENDING_ORDER_ID
+
+PATCH {{baseUrl}}/orders/{{pendingSkipId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "DELIVERED"
+}
+
+###
+
+### Invalid status value → expect 422
+PATCH {{baseUrl}}/orders/{{updateOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "EXPLODED"
+}
+
+
 # ── Cancel (soft-delete) ──────────────────────────────────────────────────────
 
 ### Cancel a PENDING order — paste a PENDING order id
