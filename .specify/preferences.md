@@ -7,7 +7,7 @@ linting:            ruff
 package_manager:    uv
 
 database:           PostgreSQL (SQLAlchemy async ORM + asyncpg driver)
-auth:               none (out of scope for this assignment)
+auth:               JWT Bearer tokens (HS256) — python-jose[cryptography] + bcrypt (passlib removed)
 deployment_target:  local only
 
 api_style:          REST + SSE (Server-Sent Events for AG-UI streaming)

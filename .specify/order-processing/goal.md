@@ -5,15 +5,15 @@ A user can place, track, list, and cancel orders both through a REST API and by 
 
 ## Success signals
 <!-- Each signal is an observable user-facing outcome. Checked off by the orchestrator after each phase. -->
-- [ ] S1: POST /orders creates an order and returns its ID
-- [ ] S2: GET /orders/{id} returns full order details
-- [ ] S3: GET /orders returns all orders, filterable by status
-- [ ] S4: DELETE /orders/{id} cancels a PENDING order; rejects non-PENDING with 409
-- [ ] S5: Background job promotes PENDING → PROCESSING every 5 minutes (verified by test)
-- [ ] S6: MCP server exposes all four order operations as callable tools
-- [ ] S7: A2A agent accepts a natural-language task and executes the correct order operation
-- [ ] S8: AG-UI /agent/stream SSE endpoint streams agent events to the chat frontend
-- [ ] S9: Chat frontend renders agent responses and UI-action cards live
+- [x] S1: POST /orders creates an order and returns its ID
+- [x] S2: GET /orders/{id} returns full order details
+- [x] S3: GET /orders returns all orders, filterable by status
+- [x] S4: DELETE /orders/{id} cancels a PENDING order; rejects non-PENDING with 409
+- [x] S5: Background job promotes PENDING → PROCESSING every 5 minutes (verified by test)
+- [x] S6: MCP server exposes all four order operations as callable tools
+- [x] S7: A2A agent accepts a natural-language task and executes the correct order operation
+- [x] S8: AG-UI /agent/stream SSE endpoint streams agent events to the chat frontend
+- [x] S9: Chat frontend renders agent responses and UI-action cards live
 
 ## Spec coverage
 <!-- Maps each signal to the spec requirements it satisfies -->
@@ -28,5 +28,4 @@ S8 → spec req: 2 (AG-UI)
 S9 → spec req: 2 (AG-UI + A2UI)
 
 ## Goal progress
-<!-- Updated by orchestrator after each phase completes -->
-(not started)
+All signals complete — feature shipped. REST API, scheduler, MCP tools (7), A2A, AG-UI SSE stream, and chat frontend all operational.
