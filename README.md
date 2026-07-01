@@ -74,6 +74,7 @@ The app uses LM Studio's Anthropic-compatible endpoint — no Anthropic account 
 | `POST` | `/orders` | Bearer | Create an order — returns 201 + full order |
 | `GET` | `/orders/{id}` | Bearer | Get order by ID — 404 if not found |
 | `GET` | `/orders?status=PENDING` | Bearer | List all orders, optional status filter |
+| `PATCH` | `/orders/{id}/status` | Bearer | Advance order status — 422 on invalid transition |
 | `DELETE` | `/orders/{id}` | Bearer | Cancel a PENDING order — 409 if already processing |
 | `GET` | `/agent/stream?message=…` | Bearer | AG-UI SSE stream — natural language to agent |
 | `POST` | `/a2a/tasks/send` | Bearer | A2A task submission |
@@ -81,7 +82,13 @@ The app uses LM Studio's Anthropic-compatible endpoint — no Anthropic account 
 | `GET` | `/.well-known/agent.json` | Bearer | A2A Agent Card |
 | `GET` | `/` | Bearer | Chat frontend |
 
-**Order lifecycle:** `PENDING` → `PROCESSING` (automatic, every 5 min) → `SHIPPED` → `DELIVERED`  
+**Order lifecycle:**
+```
+PENDING ──(scheduler, every 5 min)──► PROCESSING ──(PATCH /status)──► SHIPPED ──(PATCH /status)──► DELIVERED
+   └──(DELETE /orders/{id})──► CANCELLED
+```
+`DELIVERED` and `CANCELLED` are terminal — no further transitions are accepted. Invalid transitions return 422.
+
 **Cancellation:** `DELETE /orders/{id}` soft-deletes — sets status to `CANCELLED`, record is retained for audit. Cancelled orders are returned by `GET /orders?status=CANCELLED`.
 
 **Validation:** `POST /orders` returns 422 for empty customer name, empty items list, zero/negative quantity, or negative price.
@@ -177,12 +184,13 @@ tool names are stripped, and stack traces are replaced with a generic error mess
 
 ## Running tests
 
-All 279 tests run without LM Studio — every agent test mocks the LLM client.
+All 395 tests run without LM Studio — every agent test mocks the LLM client.
 
 ```bash
-uv run pytest tests/ --tb=short          # all 279 tests
-uv run pytest tests/ -m eval             # 70 evaluation tests (guardrails + sanitizer)
-uv run pytest tests/ -m "not eval"       # 209 non-eval tests
+uv run pytest tests/ --tb=short          # all 395 tests
+uv run pytest tests/ -m eval             # 102 evaluation tests (guardrails + sanitizer)
+uv run pytest tests/ -m "not eval"       # 293 non-eval tests
+uv run pytest tests/integration/         # 61 end-to-end integration tests (requires TEST_DATABASE_URL)
 ```
 
 ### Pytest markers
@@ -192,9 +200,20 @@ uv run pytest tests/ -m "not eval"       # 209 non-eval tests
 | `eval` | Deterministic guardrail and pipeline tests | Runs by default; skip with `SKIP_EVALS=true` repo variable |
 | `slow` | Requires LM Studio running | Never runs in CI |
 
+### Integration tests
+
+Tests under `tests/integration/` exercise the full HTTP stack against a real PostgreSQL database. They are skipped automatically when `TEST_DATABASE_URL` is not set.
+
+| File | What it covers |
+|---|---|
+| `test_orders_api.py` | All 5 REST order endpoints including auth enforcement and cross-user isolation |
+| `test_auth_api.py` | Register, login, JWT token lifecycle, two-user isolation, invalid token on all routes |
+| `test_order_lifecycle.py` | 5 end-to-end lifecycle variants using only REST API calls — no DB shortcuts |
+| `test_a2a_flow.py` | A2A task submission and polling |
+
 ### VS Code Test Explorer
 
-The Testing panel (flask icon in sidebar) discovers all 279 tests automatically.
+The Testing panel (flask icon in sidebar) discovers all 395 tests automatically.
 Use `Ctrl+Shift+P` → **Python: Select Interpreter** → pick `.venv` if tests aren't discovered.
 
 ---
@@ -208,7 +227,7 @@ Install recommended extensions when prompted, or via `Ctrl+Shift+P` → **Extens
 | Configuration | Description |
 |---|---|
 | Server: Debug | Start uvicorn on port 8002 with file-watch reload (`src/` only) |
-| Test: All | Run all 279 tests |
+| Test: All | Run all 395 tests |
 | Test: Eval only | Run only `@pytest.mark.eval` tests |
 | Test: Skip evals | Run all tests except eval-marked |
 | Test: Current file | Run pytest on the file open in the editor |
