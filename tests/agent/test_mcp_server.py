@@ -22,6 +22,7 @@ EXPECTED_TOOLS = {
     "cancel_order_tool",
     "find_orders_by_product_tool",
     "search_orders",
+    "update_order_status_tool",
 }
 
 
@@ -60,8 +61,8 @@ def _make_order(status: OrderStatus = OrderStatus.PENDING) -> Order:
 
 
 @pytest.mark.asyncio
-async def test_list_tools_contains_all_six():
-    """All six MCP tools are registered — run_migrations is intentionally excluded."""
+async def test_list_tools_contains_all_seven():
+    """All seven MCP tools are registered — run_migrations is intentionally excluded."""
     from unittest.mock import MagicMock
 
     mcp = build_mcp_server(MagicMock())  # session factory not called for list_tools
@@ -157,6 +158,63 @@ async def test_cancel_order_tool_not_cancellable_raises():
     mcp = build_mcp_server(factory)
     with pytest.raises(Exception):
         await mcp.call_tool("cancel_order_tool", {"order_id": str(order.id)})
+
+
+# ── update_order_status_tool ─────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_update_order_status_tool_invalid_uuid_raises():
+    mcp = build_mcp_server(MagicMock())
+    with pytest.raises(Exception, match="UUID|Invalid order ID"):
+        await mcp.call_tool("update_order_status_tool", {"order_id": "bad-uuid", "status": "PROCESSING"})
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_tool_invalid_status_raises():
+    mcp = build_mcp_server(MagicMock())
+    import uuid
+    with pytest.raises(Exception, match="Invalid status|Must be one of"):
+        await mcp.call_tool("update_order_status_tool", {"order_id": str(uuid.uuid4()), "status": "EXPLODED"})
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_tool_order_not_found_raises():
+    import uuid
+    factory = _session_factory_returning(None)
+    mcp = build_mcp_server(factory)
+    with pytest.raises(Exception):
+        await mcp.call_tool("update_order_status_tool", {"order_id": str(uuid.uuid4()), "status": "PROCESSING"})
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_tool_invalid_transition_raises():
+    """update_order_status_tool raises when the state machine rejects the transition."""
+    order = _make_order(status=OrderStatus.DELIVERED)  # terminal — no transitions allowed
+    factory = _session_factory_returning(order)
+    mcp = build_mcp_server(factory)
+    with pytest.raises(Exception):
+        await mcp.call_tool("update_order_status_tool", {"order_id": str(order.id), "status": "PENDING"})
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_tool_valid_transition_returns_dict():
+    """update_order_status_tool returns updated order dict on a valid transition."""
+    import json
+    order = _make_order(status=OrderStatus.PENDING)
+    factory = _session_factory_returning(order)
+    mcp = build_mcp_server(factory)
+
+    # PENDING → PROCESSING is valid; mock the session so status is mutated
+    raw = await mcp.call_tool("update_order_status_tool", {"order_id": str(order.id), "status": "PROCESSING"})
+    # Parse result — FastMCP may return (content, meta) tuple or raw content
+    if isinstance(raw, tuple):
+        text = raw[0].text if hasattr(raw[0], "text") else str(raw[0])
+    else:
+        text = raw[0].text if hasattr(raw[0], "text") else str(raw)
+    result = json.loads(text)
+    assert result["id"] == str(order.id)
+    # status in result reflects what the service returned (mocked session keeps original)
+    assert "status" in result
 
 
 # ── find_orders_by_product_tool happy path (mocked DB) ───────────────────────

@@ -10,12 +10,12 @@ test immediately.
 
 ## Success signals
 
-- [ ] S1 — `ThreatCategory` enum exists with all nine values and is the single source of truth
-- [ ] S2 — A blocked attack from any category is classified into the correct one, observable in `GuardrailResult.category` and `guardrail blocked: category=<x>` log lines
-- [ ] S3 — Tool-result injection (indirect / context poisoning) is detected and neutralized before it is fed back to the LLM
-- [ ] S4 — Eval suite asserts per-category classification; every category has at least one labelled blocked case; suite is green
-- [ ] S5 — No regression: all pre-existing tests pass; no new false positives on normal order traffic
+- [x] S1 — `ThreatCategory` enum exists with all nine values and is the single source of truth
+- [x] S2 — A blocked attack from any category is classified into the correct one, observable in `GuardrailResult.category` and `guardrail blocked: category=<x>` log lines
+- [x] S3 — Tool-result injection (indirect / context poisoning) is detected and neutralized before it is fed back to the LLM
+- [x] S4 — Eval suite asserts per-category classification; every category has at least one labelled blocked case; suite is green
+- [x] S5 — No regression: all pre-existing tests pass; no new false positives on normal order traffic
 
 ## Goal progress
 
-(updated as phases complete)
+All signals complete — feature shipped. 102 eval tests pass; `ThreatCategory` enum, `ToolOutputGuardrail`, and per-category logging all in production.

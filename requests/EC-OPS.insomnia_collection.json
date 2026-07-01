@@ -110,6 +110,51 @@
       "body": {}
     },
     {
+      "_id": "req_agent_update_status_processing",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Update order status to PROCESSING via natural language",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Update%20order%20REPLACE_WITH_ORDER_ID%20status%20to%20PROCESSING",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_agent_update_status_shipped",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Mark order as shipped via natural language",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Mark%20order%20REPLACE_WITH_ORDER_ID%20as%20shipped",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
+      "_id": "req_agent_update_status_delivered",
+      "_type": "request",
+      "parentId": "fld_f6e58c4504b54167",
+      "name": "Mark order as delivered via natural language",
+      "method": "GET",
+      "url": "{{ baseUrl }}/agent/stream?message=Mark%20order%20REPLACE_WITH_ORDER_ID%20as%20delivered",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {}
+    },
+    {
       "_id": "req_cd158e1c9a9c4ec8",
       "_type": "request",
       "parentId": "fld_f6e58c4504b54167",
@@ -639,6 +684,102 @@
         "prefix": "Bearer"
       },
       "body": {}
+    },
+    {
+      "_id": "req_patch_pending_to_processing",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Update status — PENDING → PROCESSING",
+      "method": "PATCH",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ORDER_ID/status",
+      "headers": [
+        {
+          "id": "hdr_patch1_content_type",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"status\": \"PROCESSING\"}"
+      }
+    },
+    {
+      "_id": "req_patch_processing_to_shipped",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Update status — PROCESSING → SHIPPED",
+      "method": "PATCH",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ORDER_ID/status",
+      "headers": [
+        {
+          "id": "hdr_patch2_content_type",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"status\": \"SHIPPED\"}"
+      }
+    },
+    {
+      "_id": "req_patch_shipped_to_delivered",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Update status — SHIPPED → DELIVERED",
+      "method": "PATCH",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ORDER_ID/status",
+      "headers": [
+        {
+          "id": "hdr_patch3_content_type",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"status\": \"DELIVERED\"}"
+      }
+    },
+    {
+      "_id": "req_patch_invalid_transition",
+      "_type": "request",
+      "parentId": "fld_4254b062098648fc",
+      "name": "Update status — invalid transition (expects 422)",
+      "method": "PATCH",
+      "url": "{{ baseUrl }}/orders/REPLACE_WITH_ORDER_ID/status",
+      "headers": [
+        {
+          "id": "hdr_patch4_content_type",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ token }}",
+        "prefix": "Bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"status\": \"DELIVERED\"}"
+      }
     },
     {
       "_id": "fld_41946a791c804613",

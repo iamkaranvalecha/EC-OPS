@@ -67,7 +67,105 @@ Authorization: Bearer {{token}}
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# SCENARIO 2: Bulk creation + status filtering
+# SCENARIO 2: Full status lifecycle — PENDING → PROCESSING → SHIPPED → DELIVERED
+# Demonstrates the PATCH /orders/{id}/status endpoint walking through every
+# valid transition in the state machine. Mirrors what an AI agent would do
+# when processing and fulfilling an order.
+# ════════════════════════════════════════════════════════════════════════════
+
+### Step 2.1 — Create order (starts as PENDING)
+# @name status_lifecycle_create
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "customer_name": "Status Lifecycle Test",
+  "items": [
+    { "product_name": "Laptop", "quantity": 1, "price": "999.00" }
+  ]
+}
+
+###
+
+### Step 2.2 — Verify initial status is PENDING
+# Copy the id from Step 2.1 response
+@status_lifecycle_id = REPLACE_WITH_ID_FROM_2_1
+
+GET {{baseUrl}}/orders/{{status_lifecycle_id}}
+Authorization: Bearer {{token}}
+
+###
+
+### Step 2.3 — Advance to PROCESSING (warehouse picked up the order)
+PATCH {{baseUrl}}/orders/{{status_lifecycle_id}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "PROCESSING"
+}
+
+###
+
+### Step 2.4 — Verify status is PROCESSING and updated_at is set
+GET {{baseUrl}}/orders/{{status_lifecycle_id}}
+Authorization: Bearer {{token}}
+
+###
+
+### Step 2.5 — Advance to SHIPPED (carrier collected)
+PATCH {{baseUrl}}/orders/{{status_lifecycle_id}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "SHIPPED"
+}
+
+###
+
+### Step 2.6 — Confirm it now appears in SHIPPED list
+GET {{baseUrl}}/orders?status=SHIPPED
+Authorization: Bearer {{token}}
+
+###
+
+### Step 2.7 — Advance to DELIVERED (customer received package)
+PATCH {{baseUrl}}/orders/{{status_lifecycle_id}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "DELIVERED"
+}
+
+###
+
+### Step 2.8 — Verify terminal state: DELIVERED
+GET {{baseUrl}}/orders/{{status_lifecycle_id}}
+Authorization: Bearer {{token}}
+
+###
+
+### Step 2.9 — Attempt invalid backward transition DELIVERED → SHIPPED → expect 422
+PATCH {{baseUrl}}/orders/{{status_lifecycle_id}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "SHIPPED"
+}
+
+###
+
+### Step 2.10 — Attempt to cancel a DELIVERED order → expect 409
+DELETE {{baseUrl}}/orders/{{status_lifecycle_id}}
+Authorization: Bearer {{token}}
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCENARIO 3: Bulk creation + status filtering
 # Create several orders, filter by status, verify counts
 # ════════════════════════════════════════════════════════════════════════════
 

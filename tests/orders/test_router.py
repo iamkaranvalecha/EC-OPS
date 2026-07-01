@@ -12,7 +12,7 @@ from src.auth.dependencies import get_current_user
 from src.auth.models import User
 from src.core.dependencies import get_session
 from src.main import app
-from src.orders.exceptions import OrderNotCancellable, OrderNotFound
+from src.orders.exceptions import OrderNotCancellable, OrderNotFound, OrderStatusTransitionError
 from src.orders.models import Order, OrderItem, OrderStatus
 
 
@@ -177,6 +177,73 @@ async def test_delete_order_returns_404_when_not_found(client, mock_session):
             response = await ac.delete(f"/orders/{order_id}")
 
     assert response.status_code == 404
+
+
+# ── PATCH /{order_id}/status ──────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_patch_order_status_returns_200(client, mock_session):
+    order = _make_order(status=OrderStatus.PROCESSING)
+
+    with patch("src.orders.router.update_order_status", new=AsyncMock(return_value=order)):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            response = await ac.patch(
+                f"/orders/{order.id}/status",
+                json={"status": "PROCESSING"},
+            )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "PROCESSING"
+
+
+@pytest.mark.asyncio
+async def test_patch_order_status_returns_422_on_invalid_transition(client, mock_session):
+    order_id = uuid.uuid4()
+
+    with patch(
+        "src.orders.router.update_order_status",
+        new=AsyncMock(side_effect=OrderStatusTransitionError(order_id, "PENDING", "DELIVERED")),
+    ):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            response = await ac.patch(
+                f"/orders/{order_id}/status",
+                json={"status": "DELIVERED"},
+            )
+
+    assert response.status_code == 422
+    assert "PENDING" in response.json()["detail"]
+    assert "DELIVERED" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_patch_order_status_returns_404_when_not_found(client, mock_session):
+    order_id = uuid.uuid4()
+
+    with patch(
+        "src.orders.router.update_order_status",
+        new=AsyncMock(side_effect=OrderNotFound(order_id)),
+    ):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            response = await ac.patch(
+                f"/orders/{order_id}/status",
+                json={"status": "PROCESSING"},
+            )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_patch_order_status_returns_422_on_invalid_status_value(client):
+    order_id = uuid.uuid4()
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.patch(
+            f"/orders/{order_id}/status",
+            json={"status": "EXPLODED"},
+        )
+
+    assert response.status_code == 422
 
 
 # ── Input validation (422) ────────────────────────────────────────────────────

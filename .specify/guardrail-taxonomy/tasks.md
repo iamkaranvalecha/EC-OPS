@@ -9,7 +9,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
 -->
 
 ## T001 — Add ThreatCategory enum
-- Status: [ ]
+- Status: [x]
 - Phase: 1
 - Milestone: mvp
 - Spec requirement: R1
@@ -24,7 +24,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   passes; the existing `pytest tests/ -q` stays green (additive change only).
 
 ## T002 — Categorize input patterns
-- Status: [ ]
+- Status: [x]
 - Phase: 1
 - Milestone: mvp
 - Spec requirement: R2
@@ -40,7 +40,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   `pytest tests/eval/ -m eval -q`); `ruff check src/agent/guardrails.py` passes.
 
 ## T003 — Add category to GuardrailResult
-- Status: [ ]
+- Status: [x]
 - Phase: 1
 - Milestone: mvp
 - Spec requirement: R3
@@ -55,7 +55,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   passes.
 
 ## T004 — Tool-output guardrail
-- Status: [ ]
+- Status: [x]
 - Phase: 2
 - Milestone: mvp
 - Spec requirement: R4
@@ -76,7 +76,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   passes.
 
 ## T005 — Observability: structured logging
-- Status: [ ]
+- Status: [x]
 - Phase: 1
 - Milestone: mvp
 - Spec requirement: R8
@@ -91,7 +91,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   `ruff check src/agent/guardrails.py` passes.
 
 ## T006 — Extend eval cases
-- Status: [ ]
+- Status: [x]
 - Phase: 2
 - Milestone: mvp
 - Spec requirement: R5, R6
@@ -112,7 +112,7 @@ speckit-loop picks the first [ ] task when run with no arguments.
   assertion; `pytest tests/eval/ -m eval -q` exits 0; `ruff check tests/eval/` passes.
 
 ## T007 — Full test suite: no regression
-- Status: [ ]
+- Status: [x]
 - Phase: 2
 - Milestone: mvp
 - Spec requirement: R7

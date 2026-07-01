@@ -16,10 +16,10 @@ For a detailed rationale of every tool choice plus a technical Q&A section, see
 | 1 | T001 | Project scaffold — FastAPI app, uv, ruff, health endpoint |
 | 1 | T002 | Database layer — SQLAlchemy models, async engine, Alembic migrations, pgvector stub |
 | 1 | T003 | Order service — pure business logic, domain exceptions |
-| 1 | T004 | REST API router — 5 routes, FastAPI dependency injection, unit + integration tests |
+| 1 | T004 | REST API router — 5 routes (POST, GET, GET list, PATCH status, DELETE), FastAPI dependency injection, unit + integration tests |
 | 1 | T005 | Background scheduler — APScheduler PENDING→PROCESSING every 5 min |
 | 1 | T006 | Test suite consolidation — shared DB fixtures in conftest.py |
-| 2 | T007 | MCP server — 6 tools wrapping service functions (create/get/list/cancel/find-by-product/search) |
+| 2 | T007 | MCP server — 7 tools wrapping service functions (create/get/list/cancel/find-by-product/update-status/search) |
 | 2 | T008 | A2A agent endpoint — NL task submission, fire-and-forget background executor |
 | 3 | T009 | AG-UI SSE stream — ordered RunStarted/TextDelta/ToolCallStart/ToolCallResult/RunFinished |
 | 3 | T010 | A2UI ui_action events — order cards embedded in the SSE stream |
@@ -52,9 +52,11 @@ For a detailed rationale of every tool choice plus a technical Q&A section, see
 | System prompt | `src/agent/agui_stream.py`, `src/agent/executor.py` | Constrains model scope and prevents internal data leakage |
 | Per-tool call cap | Both pipelines | Stops runaway tool loops (>3 calls to same tool → user message) |
 | Tool error recovery | Both pipelines | `is_error: true` in tool_results so model handles failures gracefully |
-| Eval test suite | `tests/eval/` | 70 deterministic guardrail + pipeline evaluation tests (`@pytest.mark.eval`) |
+| Eval test suite | `tests/eval/` | 102 deterministic guardrail + pipeline evaluation tests (`@pytest.mark.eval`) |
 | Auth enforcement tests | `tests/auth/test_agent_route_auth.py` | 12 tests: 7 verifying 401 on all agent/A2A routes + 5 `_resolve_token` unit tests |
 | Guardrail wiring tests | `tests/agent/test_guardrail_wiring.py` | SSE event shape when guardrail blocks; A2A guardrail via HTTP |
+| MCP tool tests | `tests/agent/test_mcp_server.py` | 7-tool inventory check + per-tool happy/error-path tests |
+| Integration tests | `tests/integration/` | 61 tests across 4 files; all HTTP-only, no DB shortcuts; auto-skipped without `TEST_DATABASE_URL` |
 | DEBUG logging | `src/core/config.py`, `src/main.py` | `LOG_LEVEL=DEBUG` traces full LM Studio request/response cycle |
 | VS Code config | `.vscode/` | `launch.json` (5 run configs) + `tasks.json` (8 tasks) + `settings.json` (pytest, test explorer) |
 
@@ -86,7 +88,7 @@ Browser (frontend/)
        ├── /auth router        POST /auth/register, POST /auth/token  (public)
        │      └── get_current_user()  ←  JWT dependency (all protected routes)
        │
-       ├── /orders router      POST/GET/DELETE  (requires get_current_user)
+       ├── /orders router      POST/GET/PATCH/DELETE  (requires get_current_user)
        ├── /agent/stream       AG-UI SSE → LM Studio (requires get_current_user)
        ├── /a2a/tasks          A2A task submission & polling (requires get_current_user)
        ├── /.well-known/agent.json   A2A Agent Card (requires get_current_user)
@@ -176,11 +178,33 @@ Agent call path — A2A (/a2a/tasks/send):
 
 ---
 
-### 7. Domain exceptions (`OrderNotFound`, `OrderNotCancellable`)
+### 7. Domain exceptions (`OrderNotFound`, `OrderNotCancellable`, `OrderStatusTransitionError`)
 
 **Decision:** Typed domain exceptions from service layer, mapped to HTTP in router.
 
 **Why:** The service is protocol-agnostic. The MCP tool catches `OrderNotFound` and raises `ValueError`. The router raises `HTTPException(404)`. Same domain concept, correct protocol translation per caller.
+
+`OrderStatusTransitionError` is raised when `PATCH /orders/{id}/status` is called with a transition that violates the state machine (e.g. PENDING → SHIPPED, or any transition from a terminal status). The router maps it to 422; the MCP tool wraps it as `ValueError` so the LLM receives a readable error message rather than a raw Python exception.
+
+---
+
+### 7a. State machine for status transitions (`PATCH /orders/{id}/status`)
+
+**Decision:** A `_VALID_TRANSITIONS` dict in `src/orders/service.py` encodes every permitted status change as a data structure. The `update_order_status()` service function checks membership before mutating the row; an invalid transition raises `OrderStatusTransitionError`.
+
+```
+PENDING     → {PROCESSING}          (scheduler only; also allowed via PATCH for manual override)
+PROCESSING  → {SHIPPED}
+SHIPPED     → {DELIVERED}
+DELIVERED   → {}   ← terminal
+CANCELLED   → {}   ← terminal
+```
+
+**Why:**
+- A dict lookup is O(1) and the entire policy is auditable at a glance — no nested `if/elif` chains scattered across the codebase.
+- New statuses require only a one-line dict change rather than hunting down every branch.
+- Terminals are represented explicitly as empty sets, so the guard `if new_status not in _VALID_TRANSITIONS[old_status]` handles them without special cases.
+- The same dict is used whether the caller is the REST router, an MCP tool, or a future service endpoint.
 
 ---
 
@@ -248,7 +272,6 @@ These issues were identified during a full line-by-line audit but require deploy
 | Issue | Severity | Fix path |
 |---|---|---|
 | A2A `_tasks` dict is per-process — tasks posted to worker A are invisible to worker B | CRITICAL | Use Redis or DB-backed task store for multi-worker deployments |
-| `run_migrations` MCP tool is LLM-callable — prompt injection could trigger schema changes | HIGH | Remove from MCP server; keep as CLI-only management command |
 | JWT `?token=` for SSE clients appears in server access logs | MEDIUM | Implement short-lived SSE ticket exchange; log redaction via proxy |
 | `order_items.order_id` FK column has no explicit index | MEDIUM | `index=True` on the mapped column + Alembic migration |
 | Default `JWT_SECRET_KEY` not rejected at startup | HIGH | Startup guard: raise `RuntimeError` if key equals the default literal |

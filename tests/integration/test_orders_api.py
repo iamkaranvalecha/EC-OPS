@@ -425,6 +425,118 @@ async def test_user_cannot_cancel_another_users_order(api_client: AsyncClient):
     assert verify.json()["status"] == "PENDING"
 
 
+# ── PATCH /orders/{id}/status — update status ────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_full_status_lifecycle_via_patch(api_client: AsyncClient):
+    """Full happy path: PENDING → PROCESSING → SHIPPED → DELIVERED via PATCH."""
+    r = await api_client.post("/orders", json=_SIMPLE_ORDER)
+    assert r.status_code == 201
+    order_id = r.json()["id"]
+
+    # PENDING → PROCESSING
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "PROCESSING"})
+    assert r.status_code == 200
+    assert r.json()["status"] == "PROCESSING"
+    assert r.json()["updated_at"] is not None
+
+    # PROCESSING → SHIPPED
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "SHIPPED"})
+    assert r.status_code == 200
+    assert r.json()["status"] == "SHIPPED"
+
+    # SHIPPED → DELIVERED
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "DELIVERED"})
+    assert r.status_code == 200
+    assert r.json()["status"] == "DELIVERED"
+
+    # Verify in get
+    r = await api_client.get(f"/orders/{order_id}")
+    assert r.status_code == 200
+    assert r.json()["status"] == "DELIVERED"
+
+
+@pytest.mark.asyncio
+async def test_patch_status_delivered_terminal_via_force(
+    api_client: AsyncClient, db_session: AsyncSession
+):
+    r = await api_client.post("/orders", json=_SIMPLE_ORDER)
+    order_id = r.json()["id"]
+    await _force_status(db_session, order_id, OrderStatus.DELIVERED)
+
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "SHIPPED"})
+    assert r.status_code == 422
+
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "PENDING"})
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_status_cancelled_is_terminal(
+    api_client: AsyncClient, db_session: AsyncSession
+):
+    r = await api_client.post("/orders", json=_SIMPLE_ORDER)
+    order_id = r.json()["id"]
+    await api_client.delete(f"/orders/{order_id}")  # → CANCELLED
+
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "PROCESSING"})
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_status_skipping_a_step_returns_422(api_client: AsyncClient):
+    """PENDING → SHIPPED skips PROCESSING — must be rejected."""
+    r = await api_client.post("/orders", json=_SIMPLE_ORDER)
+    order_id = r.json()["id"]
+
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "SHIPPED"})
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_status_nonexistent_order_returns_404(api_client: AsyncClient):
+    r = await api_client.patch(
+        f"/orders/{uuid.uuid4()}/status", json={"status": "PROCESSING"}
+    )
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_patch_status_invalid_uuid_returns_422(api_client: AsyncClient):
+    r = await api_client.patch("/orders/not-a-uuid/status", json={"status": "PROCESSING"})
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_status_invalid_status_value_returns_422(api_client: AsyncClient):
+    r = await api_client.post("/orders", json=_SIMPLE_ORDER)
+    order_id = r.json()["id"]
+
+    r = await api_client.patch(f"/orders/{order_id}/status", json={"status": "EXPLODED"})
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_status_user_cannot_update_another_users_order(api_client: AsyncClient):
+    """PATCH /orders/{id}/status returns 404 when the order belongs to another user."""
+    r = await api_client.post("/orders", json=_SIMPLE_ORDER)
+    assert r.status_code == 201
+    order_id = r.json()["id"]
+
+    await api_client.post("/auth/register", json={"username": "user2_patch", "password": "Password1!"})
+    token_resp = await api_client.post(
+        "/auth/token", data={"username": "user2_patch", "password": "Password1!"}
+    )
+    user2_token = token_resp.json()["access_token"]
+
+    r = await api_client.patch(
+        f"/orders/{order_id}/status",
+        json={"status": "PROCESSING"},
+        headers={"Authorization": f"Bearer {user2_token}"},
+    )
+    assert r.status_code == 404
+
+
 # ── Auth enforcement on orders routes ────────────────────────────────────────
 
 @pytest.mark.asyncio
@@ -435,3 +547,4 @@ async def test_orders_routes_require_auth(raw_client: AsyncClient):
     assert (await raw_client.post("/orders", json=_SIMPLE_ORDER)).status_code == 401
     assert (await raw_client.get(f"/orders/{fake_id}")).status_code == 401
     assert (await raw_client.delete(f"/orders/{fake_id}")).status_code == 401
+    assert (await raw_client.patch(f"/orders/{fake_id}/status", json={"status": "PROCESSING"})).status_code == 401

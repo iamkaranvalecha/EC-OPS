@@ -8,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.dependencies import get_current_user
 from src.auth.models import User
 from src.core.dependencies import get_session
-from src.orders.exceptions import OrderNotCancellable, OrderNotFound
+from src.orders.exceptions import OrderNotCancellable, OrderNotFound, OrderStatusTransitionError
 from src.orders.models import OrderStatus
-from src.orders.schemas import OrderCreate, OrderResponse
-from src.orders.service import cancel_order, create_order, get_order, list_orders
+from src.orders.schemas import OrderCreate, OrderResponse, OrderStatusUpdate
+from src.orders.service import cancel_order, create_order, get_order, list_orders, update_order_status
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -46,6 +46,22 @@ async def get_order_route(
         order = await get_order(order_id, session, user_id=current_user.id)
     except OrderNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return OrderResponse.model_validate(order)
+
+
+@router.patch("/{order_id}/status", response_model=OrderResponse)
+async def update_order_status_route(
+    order_id: uuid.UUID,
+    data: OrderStatusUpdate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> OrderResponse:
+    try:
+        order = await update_order_status(order_id, data.status, session, user_id=current_user.id)
+    except OrderNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except OrderStatusTransitionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return OrderResponse.model_validate(order)
 
 

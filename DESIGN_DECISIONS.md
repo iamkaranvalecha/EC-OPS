@@ -22,9 +22,10 @@ questions about the system's design.
 11. [ruff](#11-ruff)
 12. [LM Studio via Anthropic-compatible endpoint](#12-lm-studio-via-anthropic-compatible-endpoint)
 13. [JWT authentication](#13-jwt-authentication)
-14. [Agent guardrails and evaluation harness](#14-agent-guardrails-and-evaluation-harness)
-15. [Code hardening — bug audit](#15-code-hardening--bug-audit-2026-06)
-16. [Anticipated questions](#16-anticipated-questions)
+14. [Order status state machine](#14-order-status-state-machine-patch-ordersidstatus)
+15. [Agent guardrails and evaluation harness](#15-agent-guardrails-and-evaluation-harness)
+16. [Code hardening — bug audit](#16-code-hardening--bug-audit-2026-06)
+17. [Anticipated questions](#17-anticipated-questions)
 
 ---
 
@@ -430,7 +431,37 @@ password hashing (passlib removed).
 
 ---
 
-## 14. Agent guardrails and evaluation harness
+## 14. Order status state machine (`PATCH /orders/{id}/status`)
+
+**Decision:** Encode permitted status transitions as a `_VALID_TRANSITIONS` dict in `src/orders/service.py`. A single `update_order_status()` service function validates the transition, updates the row, and raises `OrderStatusTransitionError` on violations.
+
+```python
+_VALID_TRANSITIONS = {
+    OrderStatus.PENDING:    {OrderStatus.PROCESSING},
+    OrderStatus.PROCESSING: {OrderStatus.SHIPPED},
+    OrderStatus.SHIPPED:    {OrderStatus.DELIVERED},
+    OrderStatus.DELIVERED:  set(),   # terminal
+    OrderStatus.CANCELLED:  set(),   # terminal
+}
+```
+
+**Rationale:**
+
+- *Single source of truth* — the transition policy is a data structure, not a network of `if/elif` branches. Any reader can see the complete state machine at a glance.
+- *Easy to extend* — adding a new status (e.g. `RETURNED`) requires only a one-line dict change plus an Alembic migration for the DB enum.
+- *Terminal states are explicit* — `DELIVERED` and `CANCELLED` map to empty sets, so the guard `if new_status not in _VALID_TRANSITIONS[old_status]` covers them without special cases.
+- *Protocol-agnostic service* — `update_order_status()` accepts an `AsyncSession` and raises typed exceptions. The REST router maps `OrderStatusTransitionError` to 422; the MCP tool wraps it as `ValueError` for the LLM. Same domain logic, right HTTP/MCP translation per caller.
+- *`updated_at` set explicitly* — necessary because SQLAlchemy's `onupdate=func.now()` only fires on ORM flush, not on bulk Core UPDATE statements (used by the scheduler). Keeping the same explicit assignment in `update_order_status()` makes the behaviour consistent and predictable.
+
+**Alternatives considered:**
+
+- *Enum methods on `OrderStatus`* (e.g. `status.next_states()`) — hides the machine inside the ORM model, making it harder to test the policy in isolation and coupling the domain model to business rules.
+- *DB-level check constraints* — enforce at the database level but produce opaque DB errors rather than typed domain exceptions. The application layer would still need to check transitions to return 422 instead of 500.
+- *Workflow engine (Celery, Prefect)* — heavy for a five-state linear pipeline; the dict approach provides the same guarantees with zero infrastructure.
+
+---
+
+## 15. Agent guardrails and evaluation harness
 
 **Decision:** Deterministic rule-based guardrails with a separate evaluation test suite; no LLM-as-judge.
 
@@ -470,7 +501,7 @@ password hashing (passlib removed).
 
 ---
 
-## 15. Code hardening — bug audit (2026-06)
+## 16. Code hardening — bug audit (2026-06)
 
 **Context:** A full line-by-line audit of all source and test files identified 24 issues
 across 15 files. 10 were fixed immediately; 6 require architectural decisions.
@@ -498,8 +529,6 @@ These require deployment-level changes:
 
 **A2A task store is per-process.** The `_tasks` dict in `a2a_router.py` lives in one uvicorn worker's memory. With `--workers N`, a task POSTed to worker A is invisible when GET polls worker B. Fix: replace with a Redis hash or a `tasks` DB table.
 
-**`run_migrations` is LLM-callable.** The `run_migrations` MCP tool is registered alongside CRUD tools — a successful prompt injection could trigger `alembic upgrade head` through the chat interface. Fix: remove from `build_mcp_server()`; expose only via `scripts/migrate.py`.
-
 **JWT `?token=` in query params.** The SSE endpoint (`/agent/stream`) accepts Bearer tokens as `?token=<jwt>` because browser `EventSource` cannot set custom headers. Query params appear in nginx/uvicorn access logs. Fix: implement a short-lived SSE ticket endpoint that exchanges a JWT for a one-time token.
 
 **Missing FK index.** `order_items.order_id` has a FK constraint but no explicit index. PostgreSQL does not auto-index FK columns. Queries like `SELECT * FROM order_items WHERE order_id IN (...)` do a sequential scan as the table grows. Fix: add `index=True` to the mapped column and generate an Alembic migration.
@@ -508,7 +537,7 @@ These require deployment-level changes:
 
 ---
 
-## 16. Anticipated questions
+## 17. Anticipated questions
 
 ### Architecture
 
@@ -582,12 +611,22 @@ to the asyncpg pool — no thread switching, no lock contention.
 
 ### Scheduler and order lifecycle
 
+**Q: What is the full order lifecycle?**
+```
+PENDING ──(scheduler, 5 min)──► PROCESSING ──(PATCH /status)──► SHIPPED ──(PATCH /status)──► DELIVERED
+   └──(DELETE /orders/{id})──► CANCELLED
+```
+Orders start PENDING on creation. The scheduler automatically promotes them to PROCESSING every 5 minutes. From PROCESSING onward, callers advance the order manually via `PATCH /orders/{id}/status`. DELIVERED and CANCELLED are terminal — no further transitions are accepted (422 on PATCH, 409 on DELETE).
+
 **Q: How does the PENDING → PROCESSING promotion work?**  
 `promote_pending_orders()` runs every 5 minutes. It issues a single Core
 `UPDATE orders SET status='PROCESSING', updated_at=now() WHERE status='PENDING'`
 statement — one round-trip to the database regardless of how many orders
 are promoted. This is intentionally not an ORM flush loop because N orders
 would produce N+1 queries.
+
+**Q: How does `PATCH /orders/{id}/status` enforce valid transitions?**  
+`update_order_status()` in `src/orders/service.py` looks up `new_status` in `_VALID_TRANSITIONS[current_status]`. If it's not present, the function raises `OrderStatusTransitionError`. The router maps this to HTTP 422; the MCP tool wraps it as `ValueError`. The transition dict is the single source of truth — there are no conditional branches scattered elsewhere.
 
 **Q: What prevents the scheduler from running concurrently?**  
 `max_instances=1` tells APScheduler to skip a new job firing if the previous
@@ -599,8 +638,7 @@ one is still running. `coalesce=True` collapses missed firings into one
 retains the row. The CANCELLED status is terminal — attempting to cancel
 again raises `OrderNotCancellable`. Cancelled orders are returned by
 `GET /orders?status=CANCELLED` and `GET /orders/{id}` (returns 200 with
-`status: CANCELLED`, not 404). The active lifecycle is: PENDING (creation)
-→ PROCESSING (scheduler) → SHIPPED → DELIVERED.
+`status: CANCELLED`, not 404).
 
 ---
 
@@ -644,7 +682,18 @@ no loop affinity, no cross-test contamination.
 process, defeating skip guards that check for the absence of the variable.
 `dotenv_values()` reads into a local dict with no side effects.
 
-**Q: Why do all 176 tests pass without LM Studio running?**  
+**Q: Why do integration tests use only REST API calls — no DB shortcuts?**  
+Integration tests in `tests/integration/` never write to the database directly (no `db_session.execute(update(...))` shortcuts). Every state change goes through the HTTP API — the same path a real client takes. This approach verifies the full request/response contract, not just the service layer in isolation. It catches issues like missing endpoint wiring, incorrect HTTP status codes, wrong response shapes, and auth gaps that unit tests cannot see. The trade-off is that tests require a running database and are slower; they are skipped automatically when `TEST_DATABASE_URL` is absent.
+
+**Q: How are the 5 lifecycle test variants structured?**  
+`tests/integration/test_order_lifecycle.py` covers five distinct order paths using HTTP helpers (`_create`, `_get`, `_patch_status`, `_list_by_status`, `_cancel`) that assert the correct status code on every call:
+1. *Full fulfilment* — PENDING→PROCESSING→SHIPPED→DELIVERED, list filters at every stage, terminal 422/409 checks
+2. *Early cancel* — PENDING→CANCELLED, soft-delete retained, 409 double-cancel, 422 on any PATCH
+3. *Cancel blocked* — verifies cancel returns 409 at PROCESSING, SHIPPED, and DELIVERED stages
+4. *Multi-item* — 3-item order through all stages; items, customer_name, and created_at unchanged; updated_at progresses
+5. *Parallel orders* — two orders walk independent paths simultaneously; list filters always scoped correctly
+
+**Q: Why do all 395 tests pass without LM Studio running?**  
 Every test that touches the agent layer either: (a) is blocked by the guardrail before any LLM call, (b) patches the entire executor with `AsyncMock`, or (c) injects a mock Anthropic client that raises immediately after `RunStarted`. The `@pytest.mark.slow` marker is reserved for tests that require a real model — none are written yet because model *quality* testing (does Qwen pick the right tool?) is a separate concern from infrastructure correctness.
 
 ---
@@ -705,7 +754,7 @@ are obtained via `POST /auth/token` and passed as `Authorization: Bearer <token>
 `python-jose[cryptography]` (HS256) and `bcrypt` directly.
 
 **Q: How does the system prevent prompt injection?**  
-Four layers: (1) `InputGuardrail` checks 52 patterns across 9 threat categories before the LLM is called — the model never sees the adversarial payload. (2) `ToolOutputGuardrail` scans every MCP tool result before it reaches the LLM — catches indirect injection embedded in database values. (3) The system prompt instructs the model not to reveal tool names, UUIDs, or internal details. (4) `OutputSanitizer` post-processes the model's response to strip any residual leakage (tool names, full UUIDs, stack traces).
+Four layers: (1) `InputGuardrail` checks 52 patterns across 9 threat categories before the LLM is called — the model never sees the adversarial payload. (2) `ToolOutputGuardrail` scans every MCP tool result before it reaches the LLM — catches indirect injection embedded in database values (e.g. a malicious customer name). (3) The system prompt instructs the model not to reveal tool names, UUIDs, or internal details. (4) `OutputSanitizer` post-processes the model's response to strip any residual leakage (tool names, full UUIDs, stack traces). Together these layers mean a prompt injection attempt must defeat four independent checks to have any effect.
 
 **Q: How are LM Studio requests traced and debugged?**  
 Set `LOG_LEVEL=DEBUG` in `.env`. This enables `→ LM Studio` / `← LM Studio` log lines per iteration (showing iteration count, message count, stop_reason), tool input/output at DEBUG level, and raw `httpx`/`httpcore` HTTP traffic to `localhost:1234`.

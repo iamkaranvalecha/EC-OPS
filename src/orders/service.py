@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.orders.exceptions import OrderNotCancellable, OrderNotFound
+from src.orders.exceptions import OrderNotCancellable, OrderNotFound, OrderStatusTransitionError
 from src.orders.models import Order, OrderItem, OrderStatus
 from src.orders.schemas import OrderCreate
 
@@ -103,6 +103,45 @@ async def find_orders_by_product(
         product_query, len(orders), status.value if status else "all", user_id,
     )
     return orders
+
+
+_VALID_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
+    OrderStatus.PENDING: {OrderStatus.PROCESSING},
+    OrderStatus.PROCESSING: {OrderStatus.SHIPPED},
+    OrderStatus.SHIPPED: {OrderStatus.DELIVERED},
+    OrderStatus.DELIVERED: set(),
+    OrderStatus.CANCELLED: set(),
+}
+
+
+async def update_order_status(
+    order_id: uuid.UUID,
+    new_status: OrderStatus,
+    session: AsyncSession,
+    user_id: uuid.UUID | None = None,
+) -> Order:
+    order = await get_order(order_id, session, user_id=user_id)
+    old_status = order.status
+    if new_status not in _VALID_TRANSITIONS[old_status]:
+        logger.warning(
+            "status transition rejected: order %s %s → %s",
+            order_id,
+            old_status.value,
+            new_status.value,
+        )
+        raise OrderStatusTransitionError(order_id, old_status.value, new_status.value)
+    order.status = new_status
+    order.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(order)
+    logger.info(
+        "order status updated: id=%s %s → %s user=%s",
+        order_id,
+        old_status.value,
+        new_status.value,
+        user_id,
+    )
+    return order
 
 
 async def cancel_order(

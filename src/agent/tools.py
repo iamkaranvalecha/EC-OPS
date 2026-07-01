@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.core.retrieval import retrieve_similar_orders
-from src.orders.exceptions import OrderNotCancellable, OrderNotFound
+from src.orders.exceptions import OrderNotCancellable, OrderNotFound, OrderStatusTransitionError
 from src.orders.models import OrderStatus
 from src.orders.schemas import OrderCreate, OrderItemCreate
 from src.orders.service import (
@@ -17,6 +17,7 @@ from src.orders.service import (
     find_orders_by_product,
     get_order,
     list_orders,
+    update_order_status,
 )
 
 def build_mcp_server(
@@ -188,6 +189,56 @@ def build_mcp_server(
             }
             for o in orders
         ]
+
+    @mcp.tool()
+    async def update_order_status_tool(order_id: str, status: str) -> dict:
+        """Update the status of an existing order, advancing it through the fulfilment pipeline.
+
+        Valid transitions (state machine):
+          PENDING → PROCESSING
+          PROCESSING → SHIPPED
+          SHIPPED → DELIVERED
+        DELIVERED and CANCELLED are terminal — no further transitions are allowed.
+        Use cancel_order_tool to cancel a PENDING order; do not pass CANCELLED here.
+
+        order_id: UUID of the order to update.
+        status: target status — one of PENDING, PROCESSING, SHIPPED, DELIVERED.
+        Returns the updated order as a dict.
+        Raises an error if the order is not found, the UUID is invalid, or
+        the requested transition is not allowed by the state machine.
+        """
+        try:
+            order_uuid = UUID(order_id)
+        except ValueError:
+            raise ValueError(f"Invalid order ID — expected a UUID, got: {order_id!r}")
+        try:
+            new_status = OrderStatus(status)
+        except ValueError:
+            valid = ", ".join(s.value for s in OrderStatus)
+            raise ValueError(f"Invalid status '{status}'. Must be one of: {valid}")
+        try:
+            async with session_factory() as session:
+                order = await update_order_status(order_uuid, new_status, session, user_id=user_id)
+                result = {
+                    "id": str(order.id),
+                    "customer_name": order.customer_name,
+                    "status": order.status.value,
+                    "updated_at": order.updated_at.isoformat() if order.updated_at else None,
+                    "items": [
+                        {
+                            "id": str(item.id),
+                            "product_name": item.product_name,
+                            "quantity": item.quantity,
+                            "price": str(item.price),
+                        }
+                        for item in order.items
+                    ],
+                }
+        except OrderNotFound as exc:
+            raise ValueError(str(exc)) from exc
+        except OrderStatusTransitionError as exc:
+            raise ValueError(str(exc)) from exc
+        return result
 
     @mcp.tool()
     async def search_orders(query: str, top_k: int = 5) -> list:

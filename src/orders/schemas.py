@@ -9,6 +9,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from src.orders.models import OrderStatus
 
 
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
+
+
 class OrderItemCreate(BaseModel):
     product_name: str = Field(min_length=1)
     quantity: int = Field(gt=0)

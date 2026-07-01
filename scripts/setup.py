@@ -191,11 +191,12 @@ def print_guide() -> None:
        Authorization: Bearer <jwt>
 
 ── REST endpoints ───────────────────────────────────────────────────
-  POST   {base}/orders              Create an order
-  GET    {base}/orders              List all orders
-  GET    {base}/orders?status=PENDING   Filter by status
-  GET    {base}/orders/{{id}}          Get a single order
-  DELETE {base}/orders/{{id}}          Cancel a PENDING order (soft-delete)
+  POST   {base}/orders                    Create an order
+  GET    {base}/orders                    List all orders
+  GET    {base}/orders?status=PENDING     Filter by status
+  GET    {base}/orders/{{id}}             Get a single order
+  PATCH  {base}/orders/{{id}}/status      Advance order status (state machine)
+  DELETE {base}/orders/{{id}}             Cancel a PENDING order
 
 ── AI agent ─────────────────────────────────────────────────────────
   GET  {base}/agent/stream?message=…  AG-UI SSE stream
@@ -223,7 +224,7 @@ def print_guide() -> None:
   plus httpx HTTP traffic to localhost:1234. Remove for normal use.
 
 ── Tests ─────────────────────────────────────────────────────────────
-  Run all 161 tests (no LM Studio required — all tests use mocks):
+  Run all 395 tests (no LM Studio required — all tests use mocks):
     uv run pytest tests/ --tb=short
 
   Run only evaluation tests (guardrails + sanitizer, deterministic):
@@ -255,13 +256,15 @@ def print_guide() -> None:
     Install the "REST Client" extension (humao.rest-client) in VS Code,
     or use JetBrains' built-in HTTP client.
 
-  Option B — Postman collection
-    1. Import  requests/EC-OPS.postman_collection.json  into Postman.
-    2. Set the collection variable  baseUrl  to  {base}
-    3. Run  Auth / Login  to get a token, then use it in other requests.
+  Option B — Insomnia collection
+    1. Import  requests/EC-OPS.insomnia_collection.json  into Insomnia
+       (File → Import → From File).
+    2. Select the "EC-OPS Local" sub-environment — baseUrl is pre-set to {base}.
+    3. Run  Auth › Login  — the token is saved automatically.
+    4. All other requests have Bearer auth pre-wired — ready to fire.
 
     To regenerate the collection after editing .http files:
-      uv run python scripts/generate_postman.py
+      uv run python scripts/generate_insomnia.py
 
 ────────────────────────────────────────────────────────────────────
 """
